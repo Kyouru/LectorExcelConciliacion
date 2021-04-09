@@ -2,7 +2,7 @@
 using System.IO;
 using System.Configuration;
 using System.Data;
-using Excel = Microsoft.Office.Interop.Excel;
+using Microsoft.Office.Interop.Excel;
 using Oracle.ManagedDataAccess.Client;
 using System.Diagnostics;
 
@@ -12,16 +12,57 @@ namespace LectorExcelConciliacion
     {
         static void Main(string[] args)
         {
-            Console.Title = "Lector Excel Conciliacion";
 
-            string rutainput = SelectFromWhere("SELECT TBLDETALLE FROM SYST900 S WHERE TBLCODTAB = 50 AND TBLESTADO = '1' AND tblcodarg IN (14)", false) + "\\";
-            //rutainput = "C:\\BANCOEXCEL\\INPUT\\";
+            Process currentProcess = Process.GetCurrentProcess();
+            Console.Title = "Lector Excel Conciliacion (PID: "+ currentProcess.Id + ")";
+
+            //Importante:
+            Console.WriteLine("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
+            Console.WriteLine("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@     @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
+            Console.WriteLine("@@@@@@@@@@@@@@@@@@@@@@@@@@@,                @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
+            Console.WriteLine("@@@@@@@@@@@@@@@@@@@@@@     &@@@@@@@@@@@  @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
+            Console.WriteLine("@@@@@@@@@@@@@@@@@@    @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
+            Console.WriteLine("@@@@@@@@@@@@@@@   (@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
+            Console.WriteLine("@@@@@@@@@@@@   /@@@@@@@@@@@@@@          ###@@@  @@*@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
+            Console.WriteLine("@@@@@@@@@@   @@@@@@@@@@@@       @@@@@@@@@@@@@@@@@@@@@. ,@@@@@@@@@@@@@@@@@@@@@@@@");
+            Console.WriteLine("@@@@@@@@   @@@@@@@@@@@      @@@@@@@@@@@@@@@@@@@@@@@@@@@@@  @@@@@@@@@@@@@@@@@@@@@");
+            Console.WriteLine("@@@@@@@  #@@@@@@@@@      @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ (@@@@@@@@@@@@@@@@@@");
+            Console.WriteLine("@@@@@#  @@@@@@@@@      @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
+            Console.WriteLine("@@@@*  @@@@@@@@@      @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@, @@@@@@@@@@@@@@@@");
+            Console.WriteLine("@@@&  @@@@@@@@       @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ @@@@@@@@@@@@@@");
+            Console.WriteLine("@@@  @@@@@@@@.      @@@@@@@@@@@@@@@@@@@  *@@@@@@@@@@@@@@@@@@@@@@@  @@@@@@@@@@@@@");
+            Console.WriteLine("@@,  @@@@@@@@      @@@@@@@@@@@@@@@@@@@@   @@@@@@@@@@@@@@@@@@@@@@@#  @@@@@@@@@@@@");
+            Console.WriteLine("@@  (@@@@@@@       @@@@@@@@@@@@@@@@@@@     @@@@@@@@@@@@@@@@@@@@@@@  @@@@@@@@@@@@");
+            Console.WriteLine("@@  @@@@@@@@       @@@@@@@@@@@@@@              @@@@@@@@@@@@@@@@@@@  (@@@@@@@@@@@");
+            Console.WriteLine("@@  @@@@@@@@       .@@@@@@@@@@@@@@            ,@@@@@@@@@@@@@@@@@@   /@@@@@@@   @");
+            Console.WriteLine("@@  #@@@@@@@        @@@@@@@@@@@@@@@@@@     @@@@@@@@@@@@@@@@@@@@@@   @@@@@@@@  ,@");
+            Console.WriteLine("@@,  @@@@@@@@        @@@@@@@@@@@@@@@@@@  *@@@@@@@@@@@@@@@@@@@@@@    @@@@@@@@  @@");
+            Console.WriteLine("@@@  @@@@@@@@.        @@@@@@@@@@@@@@@@@  *@@@@@@@@@@@@@@@@@@@@&    @@@@@@@@   @@");
+            Console.WriteLine("@@@&  @@@@@@@@(         @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@     @@@@@@@@/  @@@");
+            Console.WriteLine("@@@@(  @@@@@@@@@          @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@      @@@@@@@@%  @@@@");
+            Console.WriteLine("@@@@@@  @@@@@@@@@            @@@@@@@@@@@@@@@@@@@@@@@@@@#       @@@@@@@@@/  @@@@@");
+            Console.WriteLine("@@@@@@@  *@@@@@@@@@               &@@@@@@@@@@@@@@@@          @@@@@@@@@@   @@@@@@");
+            Console.WriteLine("@@@@@@@@   @@@@@@@@@@@                                     @@@@@@@@@@   @@@@@@@@");
+            Console.WriteLine("@@@@@@@@@@   @@@@@@@@@@@@                              %@@@@@@@@@@@   @@@@@@@@@@");
+            Console.WriteLine("@@@@@@@@@@@@.   @@@@@@@@@@@@@@                    *@@@@@@@@@@@@@@   @@@@@@@@@@@@");
+            Console.WriteLine("@@@@@@@@@@@@@@@    @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@    @@@@@@@@@@@@@@");
+            Console.WriteLine("@@@@@@@@@@@@@@@@@@    &@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@    *@@@@@@@@@@@@@@@@@");
+            Console.WriteLine("@@@@@@@@@@@@@@@@@@@@@@      @@@@@@@@@@@@@@@@@@@@@@@@@     .@@@@@@@@@@@@@@@@@@@@@");
+            Console.WriteLine("@@@@@@@@@@@@@@@@@@@@@@@@@@@@                         @@@@@@@@@@@@@@@@@@@@@@@@@@@");
+
+            string rutainput = SelectFromWhere("SELECT TBLDETALLE FROM SYST900 S WHERE TBLCODTAB = 50 AND TBLESTADO = '1' AND tblcodarg IN (14)", false);
+            if (rutainput == null)
+            {
+                Console.WriteLine("Error obteniendo la ruta INPUT");
+                Console.ReadKey();
+                Environment.Exit(0);
+            }
+            rutainput = rutainput + "//";
 
             if (args.Length > 0)
             {
                 if (args[0] == "-killall" && args.Length == 1)
                 {
-                    Process currentProcess = Process.GetCurrentProcess();
                     foreach (var process in Process.GetProcessesByName("LectorExcelConciliacion"))
                     {
                         if (process.Id != currentProcess.Id)
@@ -31,7 +72,7 @@ namespace LectorExcelConciliacion
                         }
                     }
                 }
-                else if (args[0] == "-d" && args.Length == 2)
+                else if (args[0] == "-f" && args.Length == 2)
                 {
                     if (File.Exists(args[1]))
                     {
@@ -47,22 +88,23 @@ namespace LectorExcelConciliacion
                 {
                     Console.WriteLine("Argumentos Invalidos");
                     Console.WriteLine(" Ayuda:");
-                    Console.WriteLine(" -killall: Termina todos los procesos en ejecucion de nombre LectorExcelConciliacion.exe");
-                    Console.WriteLine(" -d <ruta>: Procesa el archivo <ruta>");
-                    Console.WriteLine(" Sin parametros: Procesa todos los archivos en la carpeta INPUT");
+                    Console.WriteLine("  -killall: Termina todos los procesos en ejecucion de nombre LectorExcelConciliacion.exe");
+                    Console.WriteLine("  -f <ruta>: Procesa el archivo <ruta>");
+                    Console.WriteLine("  Sin parametros: Procesa todos los archivos en la carpeta INPUT");
                 }
-            }
-            else if (rutainput == "\\")
-            {
-                Console.WriteLine("Error, se recibio ruta vacia INPUT\nRevisar conexion con BD");
             }
             else if (Directory.Exists(rutainput))
             {
                 string[] dirs = Directory.GetDirectories(rutainput);
 
-                //tblcodarg para work?
-                string rutawork = SelectFromWhere("SELECT TBLDETALLE FROM SYST900 S WHERE TBLCODTAB = 50 AND TBLESTADO = '1' AND tblcodarg IN (17)", false) + "\\";
-                //rutawork = "C:\\BANCOEXCEL\\WORK\\";
+                string rutawork = SelectFromWhere("SELECT TBLDETALLE FROM SYST900 S WHERE TBLCODTAB = 50 AND TBLESTADO = '1' AND tblcodarg IN (17)", false);
+                if (rutawork == null)
+                {
+                    Console.WriteLine("Error obteniendo la ruta WORK");
+                    Console.ReadKey();
+                    Environment.Exit(0);
+                }
+                rutawork = rutawork + "//";
 
                 if (dirs.Length > 0)
                 {
@@ -92,9 +134,7 @@ namespace LectorExcelConciliacion
         static void ExecuteExcel(string pathFile)
         {
             string rutawork = SelectFromWhere("SELECT TBLDETALLE FROM SYST900 S WHERE TBLCODTAB = 50 AND TBLESTADO = '1' AND tblcodarg IN (17)", false) + "\\";
-            //rutawork = "C:\\BANCOEXCEL\\WORK\\";
             string rutaoutput = SelectFromWhere("SELECT TBLDETALLE FROM SYST900 S WHERE TBLCODTAB = 50 AND TBLESTADO = '1' AND tblcodarg IN (15)", false) + "\\";
-            //rutaoutput = "C:\\BANCOEXCEL\\OUTPUT\\";
             string varchivovalido = SelectFromWhere("SELECT SUBSTR(nombrearchivocarga, 1, INSTR(nombrearchivocarga, '.', 1, 1) - 1) " +
                                                     "FROM concargarchivos " +
                                                     "WHERE SUBSTR(nombrearchivocarga, 1, INSTR(nombrearchivocarga, '.', 1, 1) - 1) IS NOT NULL " +
@@ -105,7 +145,6 @@ namespace LectorExcelConciliacion
 
             if (!(String.IsNullOrEmpty(varchivovalido)))
             {
-                //Console.WriteLine(rutawork + nameFile);
                 string xlsFilePath = Path.Combine(rutawork, pathFile);
                 read_file(xlsFilePath, varchivovalido);
                 readed_file(rutawork, rutaoutput);
@@ -120,21 +159,21 @@ namespace LectorExcelConciliacion
             FileInfo fi = new FileInfo(xlsFilePath);
             long filesize = fi.Length;
 
-            Excel.Application xlApp;
-            Excel.Workbook xlWorkBook;
-            Excel.Worksheet xlWorkSheet;
-            Excel.Range range;
+            Application xlApp;
+            Workbook xlWorkBook;
+            Worksheet xlWorkSheet;
+            Range range;
             var misValue = Type.Missing;//System.Reflection.Missing.Value;
 
             // abrir el documento 
-            xlApp = new Microsoft.Office.Interop.Excel.Application();
+            xlApp = new Application();
             xlWorkBook = xlApp.Workbooks.Open(xlsFilePath, misValue, misValue,
             misValue, misValue, misValue, misValue, misValue, misValue,
             misValue, misValue, misValue, misValue, misValue, misValue);
 
             // seleccion de la hoja de calculo
             // get_item() devuelve object y numera las hojas a partir de 1
-            xlWorkSheet = (Excel.Worksheet)xlWorkBook.Worksheets.get_Item(1);
+            xlWorkSheet = (Worksheet)xlWorkBook.Worksheets.get_Item(1);
 
             // seleccion rango activo
             range = xlWorkSheet.UsedRange;
@@ -328,6 +367,7 @@ namespace LectorExcelConciliacion
                 }
                 catch (Exception ex)
                 {
+                    vDATO = null;
                     Console.WriteLine(ex.Message);
                 }
             }
@@ -345,7 +385,7 @@ namespace LectorExcelConciliacion
                 try
                 {
                     connection.Open();
-                    command.CommandType = System.Data.CommandType.Text;
+                    command.CommandType = CommandType.Text;
                     command.CommandText = queryString;
                     command.ExecuteNonQuery();
                     command.CommandText = queryCommit;
@@ -375,7 +415,7 @@ namespace LectorExcelConciliacion
 
                     OracleCommand command = connection.CreateCommand();
                     command.CommandText = queryString;
-                    command.CommandType = System.Data.CommandType.StoredProcedure;
+                    command.CommandType = CommandType.StoredProcedure;
                     if (prmt1 >= 0)
                     {
                         command.Parameters.Add(new OracleParameter(nomprmt1, System.Data.OracleClient.OracleType.Int32)).Value = prmt1;
