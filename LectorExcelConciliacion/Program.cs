@@ -15,11 +15,11 @@ namespace LectorExcelConciliacion
             Console.Title = "Lector Excel Conciliacion";
 
             string rutainput = SelectFromWhere("SELECT TBLDETALLE FROM SYST900 S WHERE TBLCODTAB = 50 AND TBLESTADO = '1' AND tblcodarg IN (14)", false) + "\\";
-            rutainput = "C:\\BANCOEXCEL\\INPUT\\";
+            //rutainput = "C:\\BANCOEXCEL\\INPUT\\";
 
             if (args.Length > 0)
             {
-                if (args[0] == "killall")
+                if (args[0] == "-killall" && args.Length == 1)
                 {
                     Process currentProcess = Process.GetCurrentProcess();
                     foreach (var process in Process.GetProcessesByName("LectorExcelConciliacion"))
@@ -31,27 +31,54 @@ namespace LectorExcelConciliacion
                         }
                     }
                 }
-                else if (File.Exists(args[0]))
+                else if (args[0] == "-d" && args.Length == 2)
                 {
-                    Console.Write("Procesando >> " + args[0]);
-                    ExecuteExcel(args[0]);
+                    if (File.Exists(args[1]))
+                    {
+                        Console.Write("Procesando >> " + args[1]);
+                        ExecuteExcel(args[1]);
+                    }
                 }
-                else
+                else if (args.Length == 2)
                 {
                     Console.WriteLine("Archivo no encontrado\nRuta: " + args[0]);
                 }
+                else
+                {
+                    Console.WriteLine("Argumentos Invalidos");
+                    Console.WriteLine(" Ayuda:");
+                    Console.WriteLine(" -killall: Termina todos los procesos en ejecucion de nombre LectorExcelConciliacion.exe");
+                    Console.WriteLine(" -d <ruta>: Procesa el archivo <ruta>");
+                    Console.WriteLine(" Sin parametros: Procesa todos los archivos en la carpeta INPUT");
+                }
+            }
+            else if (rutainput == "\\")
+            {
+                Console.WriteLine("Error, se recibio ruta vacia INPUT\nRevisar conexion con BD");
             }
             else if (Directory.Exists(rutainput))
             {
                 string[] dirs = Directory.GetDirectories(rutainput);
+
+                //tblcodarg para work?
+                string rutawork = SelectFromWhere("SELECT TBLDETALLE FROM SYST900 S WHERE TBLCODTAB = 50 AND TBLESTADO = '1' AND tblcodarg IN (17)", false) + "\\";
+                //rutawork = "C:\\BANCOEXCEL\\WORK\\";
+
                 if (dirs.Length > 0)
                 {
                     Console.WriteLine("Se encontró " + dirs.Length + " archivos");
                 }
+                Console.WriteLine(" Copiando achivos a ruta Work...");
                 foreach (string dir in dirs)
                 {
-                    Console.WriteLine(" Procesando 1/" + dirs.Length + " >> " + dir);
-                    ExecuteExcel(dir);
+                    File.Copy(Path.Combine(rutainput, dir), rutawork, true);
+                }
+
+                string[] dirswork = Directory.GetDirectories(rutawork);
+                foreach (string dir in dirswork)
+                {
+                    Console.WriteLine(" Procesando 1/" + dirswork.Length + " >> " + dir);
+                    ExecuteExcel(Path.Combine(rutawork, dir));
                 }
             }
             else
@@ -59,24 +86,29 @@ namespace LectorExcelConciliacion
                 Console.WriteLine("Ruta no encontrada\nRuta: " + rutainput);
             }
             Console.WriteLine("Fin");
-            //Console.ReadKey();
+            Console.ReadKey();
         }
 
         static void ExecuteExcel(string pathFile)
         {
-            string rutainput = SelectFromWhere("SELECT TBLDETALLE FROM SYST900 S WHERE TBLCODTAB = 50 AND TBLESTADO = '1' AND tblcodarg IN (14)", false) + "\\";
-            //rutainput = "C:\\BANCOEXCEL\\INPUT\\";
+            string rutawork = SelectFromWhere("SELECT TBLDETALLE FROM SYST900 S WHERE TBLCODTAB = 50 AND TBLESTADO = '1' AND tblcodarg IN (17)", false) + "\\";
+            //rutawork = "C:\\BANCOEXCEL\\WORK\\";
             string rutaoutput = SelectFromWhere("SELECT TBLDETALLE FROM SYST900 S WHERE TBLCODTAB = 50 AND TBLESTADO = '1' AND tblcodarg IN (15)", false) + "\\";
             //rutaoutput = "C:\\BANCOEXCEL\\OUTPUT\\";
-
-            string varchivovalido = SelectFromWhere("SELECT substr(nombrearchivocarga,1,instr(nombrearchivocarga,'.',1,1)-1) FROM concargarchivos WHERE substr(nombrearchivocarga,1,instr(nombrearchivocarga,'.',1,1)-1) IS NOT NULL AND UPPER('" + pathFile + "') LIKE '%'||substr(nombrearchivocarga,1,instr(nombrearchivocarga,'.',1,1)-1)||'%' GROUP BY nombrearchivocarga ORDER BY nombrearchivocarga", true);
+            string varchivovalido = SelectFromWhere("SELECT SUBSTR(nombrearchivocarga, 1, INSTR(nombrearchivocarga, '.', 1, 1) - 1) " +
+                                                    "FROM concargarchivos " +
+                                                    "WHERE SUBSTR(nombrearchivocarga, 1, INSTR(nombrearchivocarga, '.', 1, 1) - 1) IS NOT NULL " +
+                                                    "AND UPPER('" + pathFile + "') " +
+                                                    "LIKE '%'||SUBSTR(nombrearchivocarga, 1, INSTR(nombrearchivocarga, '.', 1, 1) - 1)||'%' " +
+                                                    "GROUP BY nombrearchivocarga " +
+                                                    "ORDER BY nombrearchivocarga", true);
 
             if (!(String.IsNullOrEmpty(varchivovalido)))
             {
-                Console.WriteLine(rutainput + pathFile);
-                string xlsFilePath = Path.Combine(rutainput, pathFile);
+                //Console.WriteLine(rutawork + nameFile);
+                string xlsFilePath = Path.Combine(rutawork, pathFile);
                 read_file(xlsFilePath, varchivovalido);
-                readed_file(rutainput, rutaoutput);
+                readed_file(rutawork, rutaoutput);
             }
         }
 
@@ -212,15 +244,14 @@ namespace LectorExcelConciliacion
             releaseObject(xlWorkBook);
             releaseObject(xlApp);
         }
-
-        public static void readed_file(string prmtrutainput, string prmtrutaoutput)
+        public static void readed_file(string prmtrutawork, string prmtrutaoutput)
         {
             string queryString = "SELECT DISTINCT acbtmp.ID_ARCHIVO, SUBSTR(acbtmp.NOMBREARCHIVO,(INSTR(acbtmp.NOMBREARCHIVO,'\\',-1)+1)) FILEIN, (SUBSTR(SUBSTR(acbtmp.NOMBREARCHIVO, (INSTR(acbtmp.NOMBREARCHIVO, '\\',-1)+1)),1,INSTR(SUBSTR(acbtmp.NOMBREARCHIVO,(INSTR(acbtmp.NOMBREARCHIVO,'\\',-1)+1)),'.',1,1)-1)) || (CASE MOD(acbtmp.ESTADO, 2) WHEN 1 THEN '_APROBADO' ELSE '_RECHAZADO' END) || (CASE WHEN LENGTH(pkg_syst900.F_OBT_TBLDESCRI(39, acbtmp.codigobanco)) > 0 THEN '_' || pkg_syst900.F_OBT_TBLDESCRI(39, acbtmp.codigobanco) WHEN LENGTH(pkg_syst900.F_OBT_TBLDESCRI(39, acbtmp.codigobanco)) = 0 THEN '' END) || (CASE WHEN LENGTH(pkg_syst900.F_OBT_TBLDESCRI(22, acbtmp.moneda)) > 0 THEN '_' || pkg_syst900.F_OBT_TBLDESCRI(22, acbtmp.moneda) WHEN LENGTH(pkg_syst900.F_OBT_TBLDESCRI(22, acbtmp.moneda)) = 0 THEN '' END) || (CASE WHEN LENGTH(acbtmp.numerocuenta) > 0 THEN '_' || acbtmp.numerocuenta WHEN LENGTH(acbtmp.numerocuenta) = 0 THEN '' END) || '_' || (CASE WHEN acbtmp.ESTADO = 1 OR acbtmp.ESTADO = 2 THEN 'BANCO-MONEDA-CUENTA' WHEN acbtmp.ESTADO = 3 OR acbtmp.ESTADO = 4 THEN 'TIPO-CARGA' WHEN acbtmp.ESTADO = 5 OR acbtmp.ESTADO = 6 THEN 'PARAMETROS' WHEN acbtmp.ESTADO = 7 THEN 'PROCESADO' ELSE 'SIN_INFORMACION' END) || (CASE WHEN LENGTH((Select Distinct Max(ct.secuencarga) From concargaprimeratmp ct Where ct.fechacarga = trunc(acbtmp.fechacarga) And ct.codigobanco = acbtmp.codigobanco)) > 0 THEN '_'||(Select Distinct Decode(Max(ct.secuencarga), Null, 0, Max(ct.secuencarga)) From concargaprimeratmp ct Where ct.fechacarga = trunc(acbtmp.fechacarga) And ct.codigobanco = acbtmp.codigobanco) ELSE (CASE MOD(acbtmp.ESTADO, 2) WHEN 1 THEN '_0' ELSE NULL END) END || '_' ||TO_CHAR(SYSDATE, 'dd-mm-YYYY HH24MISS') || '.' || SUBSTR(acbtmp.NOMBREARCHIVO, (INSTR(acbtmp.NOMBREARCHIVO, '.', -1, 1) + 1), length(acbtmp.NOMBREARCHIVO))) As FileOut FROM archivosconcibancatmp acbtmp";
 
             Process currentProcess = Process.GetCurrentProcess();
             int vId_Archivo = currentProcess.Id;
-            string vfileinput = "";
-            string vfileoutput = "";
+            string vfilework;
+            string vfileoutput;
 
             using (OracleConnection connection =
                    new OracleConnection(ConfigurationManager.ConnectionStrings[Parameters.ambiente].ConnectionString))
@@ -230,22 +261,22 @@ namespace LectorExcelConciliacion
                 try
                 {
                     string subPath = DateTime.Now.ToString("dd-MM-yyyy");
-                    bool exists = System.IO.Directory.Exists(prmtrutaoutput + subPath);
+                    bool exists = Directory.Exists(prmtrutaoutput + subPath);
 
                     if (!exists)
-                        System.IO.Directory.CreateDirectory(prmtrutaoutput + subPath);
+                        Directory.CreateDirectory(prmtrutaoutput + subPath);
 
                     connection.Open();
                     OracleDataReader reader = command.ExecuteReader();
                     while (reader.Read())
                     {
-                        vfileinput = reader[1].ToString();
+                        vfilework = reader[1].ToString();
                         vfileoutput = reader[2].ToString();
-                        string sourceFile = System.IO.Path.Combine(prmtrutainput, vfileinput);
-                        string destFile = System.IO.Path.Combine(prmtrutaoutput + subPath, vfileoutput);
-                        if (System.IO.File.Exists(sourceFile))
+                        string sourceFile = Path.Combine(prmtrutawork, vfilework);
+                        string destFile = Path.Combine(prmtrutaoutput + subPath, vfileoutput);
+                        if (File.Exists(sourceFile))
                         {
-                            System.IO.File.Move(sourceFile, destFile);
+                            File.Move(sourceFile, destFile);
                         }
                         InsUpdDel_Oracle("DELETE FROM ARCHIVOSCONCIBANCATMP WHERE ID_ARCHIVO = " + vId_Archivo);
                     }
