@@ -11,5 +11,8 @@ namespace LectorExcelConciliacion
         //public static string ambiente = "DESARROLLO";
         //public static string ambiente = "QA";
         //public static string ambiente = "PRODUCCION";
+        //public static string ambiente = "DESARROLLO_BACKUP";
+        //public static string ambiente = "QA_BACKUP";
+        //public static string ambiente = "PRODUCCION_BACKUP";
     }
 }
