@@ -24,7 +24,7 @@ Puede trabajar con múltiples instancias.
 
 ### App.config
  - Se incluye un App.config dummy, las configuraciones SISGO no están en este repositorio.
-Solicitarlo al responsable o editar con los valores correspondientes dentro del tag <connectionStrings>.
+Solicitarlo al responsable o editar con los valores correspondientes dentro del tag "connectionStrings".
 
 ## Variable en Base de Datos
 ```PLSQL
