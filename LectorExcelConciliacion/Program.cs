@@ -82,7 +82,8 @@ namespace LectorExcelConciliacion
                 {
                     if (args[0 + offset] == "-help" || args[0 + offset] == "--help")
                     {
-                        ArgInvalid(true, false);
+                        BorrarSubWork(rutawork, currentProcess.Id, true);
+                        ArgInvalid(false, false);
                     }
                     if (args[0 + offset] == "-nopause")
                     {
@@ -105,6 +106,7 @@ namespace LectorExcelConciliacion
                                 Console.WriteLine(" LectorExcelConciliacion con PID " + process.Id + " cerrado.");
                             }
                         }
+                        BorrarSubWork(rutawork, currentProcess.Id, true);
                         Environment.Exit(0);
                     }
                     else if (args[0 + offset] == "-file")
@@ -112,6 +114,7 @@ namespace LectorExcelConciliacion
                         fileindividual = true;
                         if (args[1 + offset] == null)
                         {
+                            BorrarSubWork(rutawork, currentProcess.Id, true);
                             ArgInvalid(false, true);
                         }
                         if (File.Exists(args[1 + offset]))
@@ -137,6 +140,7 @@ namespace LectorExcelConciliacion
                 }
                 else
                 {
+                    BorrarSubWork(rutawork, currentProcess.Id, true);
                     if (offset == 0)
                         ArgInvalid(true, true);
                     else
@@ -162,6 +166,8 @@ namespace LectorExcelConciliacion
                         Console.WriteLine("Presione cualquier tecla para salir...");
                         Console.ReadKey();
                     }
+
+                    BorrarSubWork(rutawork, currentProcess.Id, true);
                     Environment.Exit(0);
                 }
                 Console.WriteLine(" Moviendo archivos a ruta Work...");
