@@ -1,7 +1,7 @@
 # Lector Excel Conciliación
-Aplicación para leer los extractos de los bancos y subirlos al sistema SISGO (ARCHIVOSCONCIBANCATMP) y llamar a los procesos correspondientes (PKG_CARGARARCHIVOSAUTO).
+Aplicación para leer los extractos de los bancos, subirlos al sistema SISGO (a la tabla ARCHIVOSCONCIBANCATMP) y llamar a los procesos correspondientes (PKG_CARGARARCHIVOSAUTO).
 
-Trabaja en los archivos en la CARPETAWORK, en su subcarpeta correspondiente (PID), finalizado el proceso, lo mueve a la CARPETAOUTPUT, en subcarpetas según fecha de proceso.
+Trabaja los archivos en la CARPETAWORK, en su subcarpeta correspondiente (según PID). Finalizado el proceso, lo mueve a la CARPETAOUTPUT, en subcarpetas según fecha de proceso.
 
 Puede trabajar con múltiples instancias.
 
