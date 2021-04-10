@@ -5,27 +5,43 @@ using System.Data;
 using Microsoft.Office.Interop.Excel;
 using Oracle.ManagedDataAccess.Client;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 
 namespace LectorExcelConciliacion
 {
     class Program
     {
+        [DllImport("kernel32.dll")]
+        static extern IntPtr GetConsoleWindow();
+
+        [DllImport("user32.dll")]
+        static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+
         static void Main(string[] args)
         {
+            const int SW_HIDE = 0;
+            //const int SW_SHOW = 5;
+            var handle = GetConsoleWindow();
+
             Process currentProcess = Process.GetCurrentProcess();
             Console.Title = "Lector Excel Conciliacion (PID: " + currentProcess.Id + ")";
             Console.WriteLine("Lector Excel Conciliacion (PID: " + currentProcess.Id + ")");
 
+            //String de conexion
+            connString ConnString = new connString();
+            string conexion = ConnString.getString(ConfigurationManager.AppSettings["ambiente"].ToString());
+            //
+
             //ruta INPUT
-            string rutainput = obtRuta(14, "INPUT");
+            string rutainput = obtRuta(conexion, 14, "INPUT");
             //
 
             //ruta OUTPUT
-            string rutaoutput = obtRuta(15, "OUTPUT");
+            string rutaoutput = obtRuta(conexion, 15, "OUTPUT");
             //
 
             //ruta WORK
-            string rutawork = obtRuta(29, "WORK");
+            string rutawork = obtRuta(conexion, 29, "WORK");
             //Sub carpeta dentro de WORK
             rutawork = rutawork + currentProcess.Id + Path.DirectorySeparatorChar;
             if (!Directory.Exists(rutawork))
@@ -53,11 +69,17 @@ namespace LectorExcelConciliacion
             bool fileindividual = false;
             while (args.Length - offset > 0)
             {
-                if (args[0 + offset] == "-nopause" || args[0 + offset] == "-killall" || args[0 + offset] == "-file")
+                if (args[0 + offset] == "-nopause" || args[0 + offset] == "-hide" || args[0 + offset] == "-killall" || args[0 + offset] == "-file")
                 {
                     if (args[0 + offset] == "-nopause")
                     {
                         pause = false;
+                        offset++;
+                    }
+                    else if (args[0 + offset] == "-hide")
+                    {
+                        ShowWindow(handle, SW_HIDE);
+                        //ShowWindow(handle, SW_SHOW);
                         offset++;
                     }
                     else if (args[0 + offset] == "-killall")
@@ -77,9 +99,8 @@ namespace LectorExcelConciliacion
                         fileindividual = true;
                         if (args[1 + offset] == null)
                         {
-                            argInvalid(pause);
+                            argInvalid(false);
                         }
-                        Console.WriteLine(args[1 + offset]);
                         if (File.Exists(args[1 + offset]))
                         {
                             Console.WriteLine(" Moviendo achivo a ruta Work...");
@@ -87,7 +108,7 @@ namespace LectorExcelConciliacion
                             {
                                 File.Move(args[1 + offset], Path.Combine(rutawork, Path.GetFileName(args[1 + offset])));
                                 Console.WriteLine("    Procesando >> " + args[1 + offset]);
-                                ExecuteExcel(Path.GetFileName(args[1 + offset]), Path.GetDirectoryName(args[1 + offset]), rutaoutput);
+                                ExecuteExcel(Path.GetFileName(args[1 + offset]), rutawork, rutaoutput, conexion);
                             }
                             catch (Exception ex)
                             {
@@ -103,7 +124,10 @@ namespace LectorExcelConciliacion
                 }
                 else
                 {
-                    argInvalid(pause);
+                    if (offset == 0)
+                        argInvalid(true);
+                    else
+                        argInvalid(pause);
                 }
             }
 
@@ -141,10 +165,12 @@ namespace LectorExcelConciliacion
                 }
 
                 string[] dirswork = Directory.GetFiles(rutawork);
+                int count = 1;
                 foreach (string dir in dirswork)
                 {
-                    Console.WriteLine(" Procesando 1/" + dirswork.Length + " >> " + Path.GetFileName(dir));
-                    ExecuteExcel(Path.GetFileName(dir), rutawork, rutaoutput);
+                    Console.WriteLine(" Procesando " + count + "/" + dirswork.Length + " >> " + Path.GetFileName(dir));
+                    ExecuteExcel(Path.GetFileName(dir), rutawork, rutaoutput, conexion);
+                    count++;
                 }
             }
 
@@ -157,9 +183,9 @@ namespace LectorExcelConciliacion
             }
         }
 
-        static void ExecuteExcel(string filename, string rutawork, string rutaoutput)
+        static void ExecuteExcel(string filename, string rutawork, string rutaoutput, string conexion)
         {
-            string varchivovalido = SelectFromWhere("SELECT SUBSTR(nombrearchivocarga, 1, INSTR(nombrearchivocarga, '.', 1, 1) - 1) " +
+            string varchivovalido = SelectFromWhere(conexion, "SELECT SUBSTR(nombrearchivocarga, 1, INSTR(nombrearchivocarga, '.', 1, 1) - 1) " +
                                                     "FROM concargarchivos " +
                                                     "WHERE SUBSTR(nombrearchivocarga, 1, INSTR(nombrearchivocarga, '.', 1, 1) - 1) IS NOT NULL " +
                                                     "AND UPPER('" + filename + "') " +
@@ -168,11 +194,11 @@ namespace LectorExcelConciliacion
                                                     "ORDER BY nombrearchivocarga", true);
             if (!(String.IsNullOrEmpty(varchivovalido)))
             {
-                read_file(Path.Combine(rutawork, filename), varchivovalido);
-                readed_file(Path.Combine(rutawork, filename), rutaoutput);
+                read_file(Path.Combine(rutawork, filename), varchivovalido, conexion);
+                readed_file(Path.Combine(rutawork, filename), rutaoutput, conexion);
             }
         }
-        public static void read_file(string xlsFilePath, string ArchivoValido)
+        public static void read_file(string xlsFilePath, string ArchivoValido, string conexion)
         {
             if (!File.Exists(xlsFilePath))
                 return;
@@ -184,7 +210,7 @@ namespace LectorExcelConciliacion
             Workbook xlWorkBook;
             Worksheet xlWorkSheet;
             Range range;
-            var misValue = Type.Missing; //System.Reflection.Missing.Value;
+            var misValue = Type.Missing;
 
             // abrir el documento 
             xlApp = new Application();
@@ -216,7 +242,7 @@ namespace LectorExcelConciliacion
 
             DateTime hoy = DateTime.Now;
 
-            InsUpdDel_Oracle("DELETE FROM ARCHIVOSCONCIBANCATMP WHERE ID_ARCHIVO = " + vId_Archivo);
+            InsUpdDel_Oracle(conexion, "DELETE FROM ARCHIVOSCONCIBANCATMP WHERE ID_ARCHIVO = " + vId_Archivo);
             for (int row = 1; row <= rows; row++)
             {
                 vCampo_A = ""; vCampo_B = ""; vCampo_C = ""; vCampo_D = "";
@@ -272,9 +298,9 @@ namespace LectorExcelConciliacion
 
                 queryinsert = "INSERT INTO ARCHIVOSCONCIBANCATMP (CAMPO_A, CAMPO_B, CAMPO_C, CAMPO_D, CAMPO_E, CAMPO_F, CAMPO_G, CAMPO_H, CAMPO_I, CAMPO_J, CAMPO_K, CAMPO_L, CAMPO_M, CAMPO_N, CAMPO_O, CAMPO_P, CAMPO_Q, CAMPO_R, CAMPO_S, CAMPO_T, ID_ARCHIVO, NOMBREARCHIVO, TAMANOARCHIVO, ID_FILAS, ESTADO, ARCHIVOVALIDO) ";
                 queryvalues = "VALUES ('" + vCampo_A + "', '" + vCampo_B + "', '" + vCampo_C + "', '" + vCampo_D + "', '" + vCampo_E + "', '" + vCampo_F + "', '" + vCampo_G + "', '" + vCampo_H + "', '" + vCampo_I + "', '" + vCampo_J + "', '" + vCampo_K + "', '" + vCampo_L + "', '" + vCampo_M + "', '" + vCampo_N + "', '" + vCampo_O + "', '" + vCampo_P + "', '" + vCampo_Q + "', '" + vCampo_R + "', '" + vCampo_S + "', '" + vCampo_T + "', " + vId_Archivo + ", '" + xlsFilePath + "', " + filesize + ", " + row + ", " + 0 /* 0 para Estado Carga Inicial */ + ", '" + ArchivoValido + "')";
-                InsUpdDel_Oracle(queryinsert + queryvalues);
+                InsUpdDel_Oracle(conexion, queryinsert + queryvalues);
             }
-            InsUpdDel_Oracle("DELETE FROM ARCHIVOSCONCIBANCATMP WHERE ID_ARCHIVO = " + vId_Archivo + " AND ID_FILAS > " + nFilaAlgo);
+            InsUpdDel_Oracle(conexion, "DELETE FROM ARCHIVOSCONCIBANCATMP WHERE ID_ARCHIVO = " + vId_Archivo + " AND ID_FILAS > " + nFilaAlgo);
 
             // cerrar
             xlWorkBook.Close(false, misValue, misValue);
@@ -287,32 +313,31 @@ namespace LectorExcelConciliacion
 
             Console.WriteLine("                  >>> Lectura y Escritura del excel completada");
 
-            Function_Procedure_Oracle(2, "PKG_CARGARARCHIVOSAUTO.P_UPD_BUSCA_BANCOMONEDACUENTA", "PIid_archivo", vId_Archivo, "", -1, "", -1);
-            string datobuscado = SelectFromWhere("SELECT DISTINCT CODIGOBANCO FROM ARCHIVOSCONCIBANCATMP WHERE ID_ARCHIVO = " + vId_Archivo + " AND ROWNUM = 1", false);
+            Function_Procedure_Oracle(conexion, 2, "PKG_CARGARARCHIVOSAUTO.P_UPD_BUSCA_BANCOMONEDACUENTA", "PIid_archivo", vId_Archivo, "", -1, "", -1);
+            string datobuscado = SelectFromWhere(conexion, "SELECT DISTINCT CODIGOBANCO FROM ARCHIVOSCONCIBANCATMP WHERE ID_ARCHIVO = " + vId_Archivo + " AND ROWNUM = 1", false);
 
             if (!(String.IsNullOrEmpty(datobuscado)))
             {
                 int vCodigoBanco = Convert.ToInt32(datobuscado);
-                int vTipoCarga = Convert.ToInt32(Function_Procedure_Oracle(1, "PKG_CARGARARCHIVOSAUTO.F_OBT_BUSCA_TIPOCARGABANCO", "PIid_archivo", vId_Archivo, "PIcodigobanco", vCodigoBanco, "", -1));
+                int vTipoCarga = Convert.ToInt32(Function_Procedure_Oracle(conexion, 1, "PKG_CARGARARCHIVOSAUTO.F_OBT_BUSCA_TIPOCARGABANCO", "PIid_archivo", vId_Archivo, "PIcodigobanco", vCodigoBanco, "", -1));
                 int vEstadoTipoCarga = 4;
                 if (vTipoCarga > 0)
                     vEstadoTipoCarga = 3;
-                InsUpdDel_Oracle("UPDATE ARCHIVOSCONCIBANCATMP SET TIPOCARGA = " + vTipoCarga + ", ESTADO = " + vEstadoTipoCarga + " WHERE ID_ARCHIVO = " + vId_Archivo + " AND CODIGOBANCO = " + vCodigoBanco);
-                int vParametros = Convert.ToInt32(Function_Procedure_Oracle(1, "PKG_CARGARARCHIVOSAUTO.F_UPD_BUSCA_EXISTEPARAMETRO", "PIid_archivo", vId_Archivo, "PIcodigobanco", vCodigoBanco, "PItipocarga", vTipoCarga));
+                InsUpdDel_Oracle(conexion, "UPDATE ARCHIVOSCONCIBANCATMP SET TIPOCARGA = " + vTipoCarga + ", ESTADO = " + vEstadoTipoCarga + " WHERE ID_ARCHIVO = " + vId_Archivo + " AND CODIGOBANCO = " + vCodigoBanco);
+                int vParametros = Convert.ToInt32(Function_Procedure_Oracle(conexion, 1, "PKG_CARGARARCHIVOSAUTO.F_UPD_BUSCA_EXISTEPARAMETRO", "PIid_archivo", vId_Archivo, "PIcodigobanco", vCodigoBanco, "PItipocarga", vTipoCarga));
                 int vEstadoParametros = 6;
                 if (vParametros > 0)
                     vEstadoParametros = 5;
-                InsUpdDel_Oracle("UPDATE ARCHIVOSCONCIBANCATMP SET ESTADO = " + vEstadoParametros + " WHERE ID_ARCHIVO = " + vId_Archivo + " AND CODIGOBANCO = " + vCodigoBanco + " AND TIPOCARGA = " + vTipoCarga);
+                InsUpdDel_Oracle(conexion, "UPDATE ARCHIVOSCONCIBANCATMP SET ESTADO = " + vEstadoParametros + " WHERE ID_ARCHIVO = " + vId_Archivo + " AND CODIGOBANCO = " + vCodigoBanco + " AND TIPOCARGA = " + vTipoCarga);
 
-                Function_Procedure_Oracle(2, "PKG_CARGARARCHIVOSAUTO.P_GEN_CONCARGAPRIMERATMP", "PIid_archivo", vId_Archivo, "", -1, "", -1);
+                Function_Procedure_Oracle(conexion, 2, "PKG_CARGARARCHIVOSAUTO.P_GEN_CONCARGAPRIMERATMP", "PIid_archivo", vId_Archivo, "", -1, "", -1);
                 Console.Write("                  >>> Generando Caja y Conciliando. " + DateTime.Now.ToString("HH:mm:ss") + " ... ");
-                Function_Procedure_Oracle(2, "PKG_CARGARARCHIVOSAUTO.P_GEN_CARGABANCOS_CAJA", "", -1, "", -1, "", -1);
+                Function_Procedure_Oracle(conexion, 2, "PKG_CARGARARCHIVOSAUTO.P_GEN_CARGABANCOS_CAJA", "", -1, "", -1, "", -1);
                 Console.WriteLine(DateTime.Now.ToString("HH:mm:ss"));
             }
         }
-        public static void readed_file(string xlsFilePath, string rutaoutput)
+        public static void readed_file(string xlsFilePath, string rutaoutput, string conexion)
         {
-            string connectionString = ConfigurationManager.ConnectionStrings["Conexion"].ToString();
             Process currentProcess = Process.GetCurrentProcess();
             int vId_Archivo = currentProcess.Id;
 
@@ -332,7 +357,7 @@ namespace LectorExcelConciliacion
             string vfileoutput;
 
             using (OracleConnection connection =
-                   new OracleConnection(connectionString))
+                   new OracleConnection(conexion))
             {
                 OracleCommand command = connection.CreateCommand();
                 command.CommandText = queryString;
@@ -360,7 +385,7 @@ namespace LectorExcelConciliacion
                         {
                             File.Move(xlsFilePath, vfileoutput);
                         }
-                        InsUpdDel_Oracle("DELETE FROM ARCHIVOSCONCIBANCATMP WHERE ID_ARCHIVO = " + vId_Archivo);
+                        InsUpdDel_Oracle(conexion, "DELETE FROM ARCHIVOSCONCIBANCATMP WHERE ID_ARCHIVO = " + vId_Archivo);
                     }
                     reader.Close();
                 }
@@ -387,13 +412,13 @@ namespace LectorExcelConciliacion
                 GC.Collect();
             }
         }
-        public static string SelectFromWhere(string executequery, bool eslike)
+        public static string SelectFromWhere(string conexion, string executequery, bool eslike)
         {
             string vDATO = "";
             string queryString = executequery.ToString();
 
             using (OracleConnection connection =
-                   new OracleConnection(ConfigurationManager.ConnectionStrings["Conexion"].ConnectionString))
+                   new OracleConnection(conexion))
             {
                 OracleCommand command = connection.CreateCommand();
                 command.CommandText = queryString;
@@ -416,13 +441,13 @@ namespace LectorExcelConciliacion
             }
             return vDATO;
         }
-        public static void InsUpdDel_Oracle(string executequery)
+        public static void InsUpdDel_Oracle(string conexion, string executequery)
         {
             string queryString = executequery.ToString();
             string queryCommit = "COMMIT";
 
             using (OracleConnection connection =
-                   new OracleConnection(ConfigurationManager.ConnectionStrings["Conexion"].ConnectionString))
+                   new OracleConnection(conexion))
             {
                 OracleCommand command = connection.CreateCommand();
                 try
@@ -443,11 +468,11 @@ namespace LectorExcelConciliacion
                 }
             }
         }
-        public static string Function_Procedure_Oracle(int tipofunpro /* tipofunpro: 1 para function, 2 para procedure  */, string executequery, string nomprmt1, int prmt1, string nomprmt2, int prmt2, string nomprmt3, int prmt3)
+        public static string Function_Procedure_Oracle(string conexion, int tipofunpro /* tipofunpro: 1 para function, 2 para procedure  */, string executequery, string nomprmt1, int prmt1, string nomprmt2, int prmt2, string nomprmt3, int prmt3)
         {
             string vDATO = "";
-            using (OracleConnection connection =
-                   new OracleConnection(ConfigurationManager.ConnectionStrings["Conexion"].ConnectionString))
+        using (OracleConnection connection =
+               new OracleConnection(conexion))
             {
                 try
                 {
@@ -506,9 +531,10 @@ namespace LectorExcelConciliacion
             Console.WriteLine("Argumentos Invalidos");
             Console.WriteLine(" Ayuda:");
             Console.WriteLine("  -nopause: Finaliza la aplicacion al terminar las operaciones. Por defecto, pausa la aplicacion");
+            Console.WriteLine("  -hide: Oculta la consola");
             Console.WriteLine("  -killall: Termina todos los procesos en ejecucion de nombre LectorExcelConciliacion.exe");
             Console.WriteLine("  -file <ruta>: Procesa el archivo <ruta>");
-            Console.WriteLine("  Sin parametros: Procesa todos los archivos en la carpeta INPUT");
+            Console.WriteLine("  Sin parametro -file: Procesa todos los archivos en la carpeta INPUT");
             if (pause)
             {
                 Console.WriteLine("Presione cualquier tecla para salir...");
@@ -516,9 +542,9 @@ namespace LectorExcelConciliacion
             }
             Environment.Exit(0);
         }
-        public static string obtRuta(int tblcodarg, string name)
+        public static string obtRuta(string conexion, int tblcodarg, string name)
         {
-            string obtRuta = SelectFromWhere("SELECT TBLDETALLE FROM SYST900 WHERE TBLCODTAB = 50 AND TBLESTADO = 1 AND TBLCODARG IN (" + tblcodarg + ")", false);
+            string obtRuta = SelectFromWhere(conexion, "SELECT TBLDETALLE FROM SYST900 WHERE TBLCODTAB = 50 AND TBLESTADO = 1 AND TBLCODARG IN (" + tblcodarg + ")", false);
             if (obtRuta == null)
             {
                 Console.WriteLine("Error obteniendo la ruta " + name);
