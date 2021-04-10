@@ -20,8 +20,8 @@ Puede trabajar con múltiples instancias.
 ## Requerimientos
  - Microsoft Office
 
-### connString.cs
- - Se incluye un connString.cs dummy, las cadenas ODBC connection para SISGO no están en este repositorio.
+### ConnString.cs
+ - Se incluye un ConnString.cs dummy, las cadenas ODBC connection para SISGO no están en este repositorio.
 Solicitarlo al responsable o editar con los valores correspondientes en el dummy.
  - En caso ya este copilado, es posible definir en LectorExcelConciliacion.config en la key customConnection una conexion especifica (no recomendado por seguridad, quedaria en un texto plano), caso contrario dejarlo vacio.
 
