@@ -151,7 +151,7 @@ namespace LectorExcelConciliacion
                     }
                     Environment.Exit(0);
                 }
-                Console.WriteLine(" Moviendo achivos a ruta Work...");
+                Console.WriteLine(" Moviendo archivos a ruta Work...");
                 foreach (string dir in dirs)
                 {
                     try
