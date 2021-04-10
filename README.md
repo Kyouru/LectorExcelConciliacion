@@ -27,7 +27,7 @@ Puede trabajar con múltiples instancias.
 Solicitarlo al responsable o editar con los valores correspondientes dentro del tag "connectionStrings".
 
 ## Variable en Base de Datos
-```PLSQL
+```SQL
 SELECT TBLDETALLE FROM SYST900 S WHERE TBLCODTAB = 50 AND TBLCODARG = 14 --CARPETAINPUT
 SELECT TBLDETALLE FROM SYST900 S WHERE TBLCODTAB = 50 AND TBLCODARG = 15 --CARPETAOUTPUT
 SELECT TBLDETALLE FROM SYST900 S WHERE TBLCODTAB = 50 AND TBLCODARG = 29 --CARPETAWORK
