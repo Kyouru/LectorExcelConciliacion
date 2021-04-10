@@ -20,11 +20,12 @@ Puede trabajar con múltiples instancias.
  - Microsoft Office
 
 ## Antes de copilar
- - Modificar la variable "ambiente" dentro de "Parameters.cs" según corresponda.
 
 ### App.config
  - Se incluye un App.config dummy, las configuraciones SISGO no están en este repositorio.
 Solicitarlo al responsable o editar con los valores correspondientes dentro del tag "connectionStrings".
+
+<add name="Conexion" connectionString="Data Source=(DESCRIPTION=(ADDRESS_LIST=(ADDRESS=(PROTOCOL=TCP)(HOST=XXX.XXX.XXX.XXX)(PORT=XXXXX)))(CONNECT_DATA=(SERVICE_NAME= )));User Id= ;Password= ;"/>
 
 ## Variable en Base de Datos
 ```SQL
