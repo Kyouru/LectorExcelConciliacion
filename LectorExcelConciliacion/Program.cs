@@ -103,7 +103,7 @@ namespace LectorExcelConciliacion
                         }
                         if (File.Exists(args[1 + offset]))
                         {
-                            Console.WriteLine(" Moviendo achivo a ruta Work...");
+                            Console.WriteLine(" Moviendo archivo a ruta Work...");
                             try
                             {
                                 File.Move(args[1 + offset], Path.Combine(rutawork, Path.GetFileName(args[1 + offset])));
