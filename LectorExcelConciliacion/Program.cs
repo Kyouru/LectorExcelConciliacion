@@ -312,7 +312,7 @@ namespace LectorExcelConciliacion
         }
         public static void readed_file(string xlsFilePath, string rutaoutput)
         {
-            string connectionString = ConfigurationManager.ConnectionStrings[Parameters.ambiente].ToString();
+            string connectionString = ConfigurationManager.ConnectionStrings["Conexion"].ToString();
             Process currentProcess = Process.GetCurrentProcess();
             int vId_Archivo = currentProcess.Id;
 
@@ -393,7 +393,7 @@ namespace LectorExcelConciliacion
             string queryString = executequery.ToString();
 
             using (OracleConnection connection =
-                   new OracleConnection(ConfigurationManager.ConnectionStrings[Parameters.ambiente].ConnectionString))
+                   new OracleConnection(ConfigurationManager.ConnectionStrings["Conexion"].ConnectionString))
             {
                 OracleCommand command = connection.CreateCommand();
                 command.CommandText = queryString;
@@ -422,7 +422,7 @@ namespace LectorExcelConciliacion
             string queryCommit = "COMMIT";
 
             using (OracleConnection connection =
-                   new OracleConnection(ConfigurationManager.ConnectionStrings[Parameters.ambiente].ConnectionString))
+                   new OracleConnection(ConfigurationManager.ConnectionStrings["Conexion"].ConnectionString))
             {
                 OracleCommand command = connection.CreateCommand();
                 try
@@ -447,7 +447,7 @@ namespace LectorExcelConciliacion
         {
             string vDATO = "";
             using (OracleConnection connection =
-                   new OracleConnection(ConfigurationManager.ConnectionStrings[Parameters.ambiente].ConnectionString))
+                   new OracleConnection(ConfigurationManager.ConnectionStrings["Conexion"].ConnectionString))
             {
                 try
                 {
@@ -518,7 +518,7 @@ namespace LectorExcelConciliacion
         }
         public static string obtRuta(int tblcodarg, string name)
         {
-            string obtRuta = SelectFromWhere("SELECT TBLDETALLE FROM SYST900 S WHERE TBLCODTAB = 50 AND TBLESTADO = 1 AND TBLCODARG IN (" + tblcodarg + ")", false);
+            string obtRuta = SelectFromWhere("SELECT TBLDETALLE FROM SYST900 WHERE TBLCODTAB = 50 AND TBLESTADO = 1 AND TBLCODARG IN (" + tblcodarg + ")", false);
             if (obtRuta == null)
             {
                 Console.WriteLine("Error obteniendo la ruta " + name);
