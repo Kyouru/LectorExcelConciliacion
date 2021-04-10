@@ -24,24 +24,33 @@ namespace LectorExcelConciliacion
             var handle = GetConsoleWindow();
 
             Process currentProcess = Process.GetCurrentProcess();
-            Console.Title = "Lector Excel Conciliacion (PID: " + currentProcess.Id + ")";
-            Console.WriteLine("Lector Excel Conciliacion (PID: " + currentProcess.Id + ")");
+            Console.Title = "Lector Excel Conciliación (PID: " + currentProcess.Id + ")";
+            Console.WriteLine("Lector Excel Conciliación (PID: " + currentProcess.Id + ")");
 
             //String de conexion
-            connString ConnString = new connString();
-            string conexion = ConnString.getString(ConfigurationManager.AppSettings["ambiente"].ToString());
+            ConnString connString = new ConnString();
+            //customString
+            string conexion;
+            if (ConfigurationManager.AppSettings["customConnection"].ToString() != "")
+            {
+                conexion = ConfigurationManager.AppSettings["customConnection"].ToString();
+            }
+            else
+            {
+                conexion = connString.GetString(ConfigurationManager.AppSettings["ambiente"].ToString());
+            }
             //
 
             //ruta INPUT
-            string rutainput = obtRuta(conexion, 14, "INPUT");
+            string rutainput = ObtRuta(conexion, 14, "INPUT");
             //
 
             //ruta OUTPUT
-            string rutaoutput = obtRuta(conexion, 15, "OUTPUT");
+            string rutaoutput = ObtRuta(conexion, 15, "OUTPUT");
             //
 
             //ruta WORK
-            string rutawork = obtRuta(conexion, 29, "WORK");
+            string rutawork = ObtRuta(conexion, 29, "WORK");
             //Sub carpeta dentro de WORK
             rutawork = rutawork + currentProcess.Id + Path.DirectorySeparatorChar;
             if (!Directory.Exists(rutawork))
@@ -59,7 +68,7 @@ namespace LectorExcelConciliacion
             }
             else
             {
-                borrarSubWork(rutawork, currentProcess.Id, false);
+                BorrarSubWork(rutawork, currentProcess.Id, false);
                 Directory.CreateDirectory(rutawork);
             }
             //
@@ -69,8 +78,12 @@ namespace LectorExcelConciliacion
             bool fileindividual = false;
             while (args.Length - offset > 0)
             {
-                if (args[0 + offset] == "-nopause" || args[0 + offset] == "-hide" || args[0 + offset] == "-killall" || args[0 + offset] == "-file")
+                if (args[0 + offset] == "-help" || args[0 + offset] == "--help" || args[0 + offset] == "-nopause" || args[0 + offset] == "-hide" || args[0 + offset] == "-killall" || args[0 + offset] == "-file")
                 {
+                    if (args[0 + offset] == "-help" || args[0 + offset] == "--help")
+                    {
+                        ArgInvalid(true, false);
+                    }
                     if (args[0 + offset] == "-nopause")
                     {
                         pause = false;
@@ -92,14 +105,14 @@ namespace LectorExcelConciliacion
                                 Console.WriteLine(" LectorExcelConciliacion con PID " + process.Id + " cerrado.");
                             }
                         }
-                        offset++;
+                        Environment.Exit(0);
                     }
                     else if (args[0 + offset] == "-file")
                     {
                         fileindividual = true;
                         if (args[1 + offset] == null)
                         {
-                            argInvalid(false);
+                            ArgInvalid(false, true);
                         }
                         if (File.Exists(args[1 + offset]))
                         {
@@ -119,15 +132,15 @@ namespace LectorExcelConciliacion
                         {
                             Console.WriteLine(" Archivo no encontrado\n Ruta: " + args[1 + offset]);
                         }
-                        offset = offset + 2;
+                        offset += 2;
                     }
                 }
                 else
                 {
                     if (offset == 0)
-                        argInvalid(true);
+                        ArgInvalid(true, true);
                     else
-                        argInvalid(pause);
+                        ArgInvalid(pause, true);
                 }
             }
 
@@ -174,7 +187,7 @@ namespace LectorExcelConciliacion
                 }
             }
 
-            borrarSubWork(rutawork, currentProcess.Id, true);
+            BorrarSubWork(rutawork, currentProcess.Id, true);
             Console.WriteLine("Fin");
             if (pause)
             {
@@ -194,11 +207,11 @@ namespace LectorExcelConciliacion
                                                     "ORDER BY nombrearchivocarga", true);
             if (!(String.IsNullOrEmpty(varchivovalido)))
             {
-                read_file(Path.Combine(rutawork, filename), varchivovalido, conexion);
-                readed_file(Path.Combine(rutawork, filename), rutaoutput, conexion);
+                Read_file(Path.Combine(rutawork, filename), varchivovalido, conexion);
+                Readed_file(Path.Combine(rutawork, filename), rutaoutput, conexion);
             }
         }
-        public static void read_file(string xlsFilePath, string ArchivoValido, string conexion)
+        public static void Read_file(string xlsFilePath, string ArchivoValido, string conexion)
         {
             if (!File.Exists(xlsFilePath))
                 return;
@@ -307,9 +320,9 @@ namespace LectorExcelConciliacion
             xlApp.Quit();
 
             // liberar
-            releaseObject(xlWorkSheet);
-            releaseObject(xlWorkBook);
-            releaseObject(xlApp);
+            ReleaseObject(xlWorkSheet);
+            ReleaseObject(xlWorkBook);
+            ReleaseObject(xlApp);
 
             Console.WriteLine("                  >>> Lectura y Escritura del excel completada");
 
@@ -336,14 +349,12 @@ namespace LectorExcelConciliacion
                 Console.WriteLine(DateTime.Now.ToString("HH:mm:ss"));
             }
         }
-        public static void readed_file(string xlsFilePath, string rutaoutput, string conexion)
+        public static void Readed_file(string xlsFilePath, string rutaoutput, string conexion)
         {
             Process currentProcess = Process.GetCurrentProcess();
             int vId_Archivo = currentProcess.Id;
 
             string queryString = "SELECT DISTINCT acbtmp.ID_ARCHIVO, " +
-                    "SUBSTR(acbtmp.NOMBREARCHIVO,(INSTR(acbtmp.NOMBREARCHIVO,'\\',-1)+1)) FILEIN, " +
-                    "SUBSTR(SUBSTR(acbtmp.NOMBREARCHIVO, (INSTR(acbtmp.NOMBREARCHIVO, '\\',-1)+1)),1,INSTR(SUBSTR(acbtmp.NOMBREARCHIVO,(INSTR(acbtmp.NOMBREARCHIVO,'\\',-1)+1)),'.',1,1)-1), " +
                     "(CASE MOD(acbtmp.ESTADO, 2) WHEN 1 THEN 'APROBADO' ELSE 'RECHAZADO' END) APROBADO, " +
                     "(CASE WHEN LENGTH(pkg_syst900.F_OBT_TBLDESCRI(39, acbtmp.codigobanco)) > 0 THEN pkg_syst900.F_OBT_TBLDESCRI(39, acbtmp.codigobanco) WHEN LENGTH(pkg_syst900.F_OBT_TBLDESCRI(39, acbtmp.codigobanco)) = 0 THEN '' END) BANCO, " +
                     "(CASE WHEN LENGTH(pkg_syst900.F_OBT_TBLDESCRI(22, acbtmp.moneda)) > 0 THEN pkg_syst900.F_OBT_TBLDESCRI(22, acbtmp.moneda) WHEN LENGTH(pkg_syst900.F_OBT_TBLDESCRI(22, acbtmp.moneda)) = 0 THEN '' END) MONEDA, " +
@@ -395,7 +406,7 @@ namespace LectorExcelConciliacion
                 }
             }
         }
-        public static void releaseObject(object obj)
+        public static void ReleaseObject(object obj)
         {
             try
             {
@@ -408,7 +419,6 @@ namespace LectorExcelConciliacion
             }
             finally
             {
-                obj = null;
                 GC.Collect();
             }
         }
@@ -476,35 +486,27 @@ namespace LectorExcelConciliacion
             {
                 try
                 {
-                    OracleCommand command = new OracleCommand(executequery, connection);
-                    command.CommandType = CommandType.StoredProcedure;
+                    OracleCommand command = new OracleCommand(executequery, connection) { CommandType = CommandType.StoredProcedure };
 
                     if (tipofunpro == 1)
                     {
-                        var returnVal = new OracleParameter("Return_Value", OracleDbType.Int32);
-                        returnVal.Direction = ParameterDirection.ReturnValue;
+                        var returnVal = new OracleParameter("Return_Value", OracleDbType.Int32) { Direction = ParameterDirection.ReturnValue };
                         command.Parameters.Add(returnVal);
                     }
 
                     if (prmt1 >= 0)
                     {
-                        var prm1 = new OracleParameter(nomprmt1, OracleDbType.Int32);
-                        prm1.Direction = ParameterDirection.Input;
-                        prm1.Value = prmt1;
+                        var prm1 = new OracleParameter(nomprmt1, OracleDbType.Int32) { Direction = ParameterDirection.Input , Value = prmt1 };
                         command.Parameters.Add(prm1);
                     }
                     if (prmt2 >= 0)
                     {
-                        var prm2 = new OracleParameter(nomprmt2, OracleDbType.Int32);
-                        prm2.Direction = ParameterDirection.Input;
-                        prm2.Value = prmt2;
+                        var prm2 = new OracleParameter(nomprmt2, OracleDbType.Int32) { Direction = ParameterDirection.Input, Value = prmt2 };
                         command.Parameters.Add(prm2);
                     }
                     if (prmt3 >= 0)
                     {
-                        var prm3 = new OracleParameter(nomprmt3, OracleDbType.Int32);
-                        prm3.Direction = ParameterDirection.Input;
-                        prm3.Value = prmt3;
+                        var prm3 = new OracleParameter(nomprmt3, OracleDbType.Int32) { Direction = ParameterDirection.Input , Value = prmt3 };
                         command.Parameters.Add(prm3);
                     }
 
@@ -526,9 +528,12 @@ namespace LectorExcelConciliacion
             }
             return vDATO;
         }
-        public static void argInvalid(bool pause)
+        public static void ArgInvalid(bool pause, bool invalid)
         {
-            Console.WriteLine("Argumentos Invalidos");
+            if (invalid)
+            {
+                Console.WriteLine("Argumentos Invalidos");
+            }
             Console.WriteLine(" Ayuda:");
             Console.WriteLine("  -nopause: Finaliza la aplicacion al terminar las operaciones. Por defecto, pausa la aplicacion");
             Console.WriteLine("  -hide: Oculta la consola");
@@ -542,7 +547,7 @@ namespace LectorExcelConciliacion
             }
             Environment.Exit(0);
         }
-        public static string obtRuta(string conexion, int tblcodarg, string name)
+        public static string ObtRuta(string conexion, int tblcodarg, string name)
         {
             string obtRuta = SelectFromWhere(conexion, "SELECT TBLDETALLE FROM SYST900 WHERE TBLCODTAB = 50 AND TBLESTADO = 1 AND TBLCODARG IN (" + tblcodarg + ")", false);
             if (obtRuta == null)
@@ -557,7 +562,7 @@ namespace LectorExcelConciliacion
             }
             return obtRuta + Path.DirectorySeparatorChar;
         }
-        public static bool borrarSubWork(string rutawork, int id, bool msg)
+        public static bool BorrarSubWork(string rutawork, int id, bool msg)
         {
             try
             {

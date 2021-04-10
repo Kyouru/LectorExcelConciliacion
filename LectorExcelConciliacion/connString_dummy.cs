@@ -5,7 +5,7 @@ using System.Text;
 
 namespace LectorExcelConciliacion
 {
-    public class connString
+    public class ConnString
     {
         public string desarrollo = "Data Source=";
         public string qa = "Data Source=";
@@ -15,9 +15,10 @@ namespace LectorExcelConciliacion
         public string desarrollo3 = "Data Source=;User Id=;Password=;";
         public string qa2 = "Data Source=;User Id=;Password=;";
         public string produccion2 = "Data Source=;User Id=;Password=;";
-        public string getString(string _name)
+        
+        public string GetString(string _name)
         {
-            return (string)typeof(connString).GetField(_name).GetValue(this);
+            return (string)typeof(ConnString).GetField(_name).GetValue(this);
         }
     }
 
