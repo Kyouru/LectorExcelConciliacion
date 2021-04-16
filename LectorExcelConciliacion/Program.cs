@@ -351,7 +351,7 @@ namespace LectorExcelConciliacion
                 if (vParametros > 0)
                     vEstadoParametros = 5;
                 InsUpdDel_Oracle(conexion, "UPDATE ARCHIVOSCONCIBANCATMP SET ESTADO = " + vEstadoParametros + " WHERE ID_ARCHIVO = " + vId_Archivo + " AND CODIGOBANCO = " + vCodigoBanco + " AND TIPOCARGA = " + vTipoCarga);
-                
+
                 if (vEstadoParametros % 2 == 1)
                 {
                     Console.WriteLine("                  >>> APROBADO");
@@ -362,6 +362,8 @@ namespace LectorExcelConciliacion
                 }
 
                 Function_Procedure_Oracle(conexion, 2, "PKG_CARGARARCHIVOSAUTO.P_GEN_CONCARGAPRIMERATMP", "PIid_archivo", vId_Archivo, "", -1, "", -1);
+
+                //demora
                 Console.Write("                  >>> Generando Caja y Conciliando. " + DateTime.Now.ToString("HH:mm:ss") + " ... ");
                 Function_Procedure_Oracle(conexion, 2, "PKG_CARGARARCHIVOSAUTO.P_GEN_CARGABANCOS_CAJA", "", -1, "", -1, "", -1);
                 Console.WriteLine(DateTime.Now.ToString("HH:mm:ss"));
