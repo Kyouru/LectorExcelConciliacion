@@ -332,7 +332,7 @@ namespace LectorExcelConciliacion
             ReleaseObject(xlWorkSheet);
             ReleaseObject(xlWorkBook);
             ReleaseObject(xlApp);
-
+            
             Console.WriteLine(" OK");
 
             Function_Procedure_Oracle(conexion, 2, "PKG_CARGARARCHIVOSAUTO.P_UPD_BUSCA_BANCOMONEDACUENTA", "PIid_archivo", vId_Archivo, "", -1, "", -1);
@@ -341,6 +341,15 @@ namespace LectorExcelConciliacion
             if (!(String.IsNullOrEmpty(datobuscado)))
             {
                 int vCodigoBanco = Convert.ToInt32(datobuscado);
+                
+                //BBVA
+                //eliminar caracter "Espacio Duro" del numero de movimiento
+                if (vCodigoBanco == 6)
+                {
+                    Console.WriteLine("                  >>> Removiendo Espacio Duro en el campo Num. Mvto (BBVA)");
+                    InsUpdDel_Oracle(conexion, "UPDATE ARCHIVOSCONCIBANCATMP SET CAMPO_E = REPLACE(CAMPO_E, ' ', '') WHERE ID_ARCHIVO = " + vId_Archivo + " AND CODIGOBANCO = " + vCodigoBanco);
+                }
+
                 int vTipoCarga = Convert.ToInt32(Function_Procedure_Oracle(conexion, 1, "PKG_CARGARARCHIVOSAUTO.F_OBT_BUSCA_TIPOCARGABANCO", "PIid_archivo", vId_Archivo, "PIcodigobanco", vCodigoBanco, "", -1));
                 int vEstadoTipoCarga = 4;
                 if (vTipoCarga > 0)
@@ -367,6 +376,10 @@ namespace LectorExcelConciliacion
                 Console.Write("                  >>> Generando Caja y Conciliando. " + DateTime.Now.ToString("HH:mm:ss") + " ... ");
                 Function_Procedure_Oracle(conexion, 2, "PKG_CARGARARCHIVOSAUTO.P_GEN_CARGABANCOS_CAJA", "", -1, "", -1, "", -1);
                 Console.WriteLine(DateTime.Now.ToString("HH:mm:ss"));
+            }
+            else
+            {
+                Console.WriteLine("                  >>> RECHAZADO. Banco no encontrado, revisar extracto descargado y parametros en SISGO");
             }
         }
         public static void Readed_file(string xlsFilePath, string rutaoutput, string conexion)
