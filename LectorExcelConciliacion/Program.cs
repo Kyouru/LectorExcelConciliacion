@@ -119,10 +119,11 @@ namespace LectorExcelConciliacion
                         }
                         if (File.Exists(args[1 + offset]))
                         {
-                            Console.WriteLine(" Moviendo archivo a ruta Work...");
+                            Console.Write(" Moviendo archivo a ruta Work... ");
                             try
                             {
                                 File.Move(args[1 + offset], Path.Combine(rutawork, Path.GetFileName(args[1 + offset])));
+                                Console.WriteLine(" OK");
                                 Console.WriteLine("    Procesando >> " + args[1 + offset]);
                                 ExecuteExcel(Path.GetFileName(args[1 + offset]), rutawork, rutaoutput, conexion);
                             }
@@ -151,11 +152,12 @@ namespace LectorExcelConciliacion
             //Caso no halla parametro -file, revisa carpeta INPUT
             if (!fileindividual)
             {
-                Console.WriteLine(" Buscardo archivos en la carpeta input...");
+                Console.Write(" Buscardo archivos en la carpeta input...");
                 string[] dirs = Directory.GetFiles(rutainput);
 
                 if (dirs.Length > 0)
                 {
+                    Console.WriteLine(" OK");
                     Console.WriteLine("  Se encontró " + dirs.Length + " archivos");
                 }
                 else
@@ -222,6 +224,7 @@ namespace LectorExcelConciliacion
             if (!File.Exists(xlsFilePath))
                 return;
 
+            Console.Write("                  >>> Lectura y Escritura del excel... ");
             FileInfo fi = new FileInfo(xlsFilePath);
             long filesize = fi.Length;
 
@@ -330,7 +333,7 @@ namespace LectorExcelConciliacion
             ReleaseObject(xlWorkBook);
             ReleaseObject(xlApp);
 
-            Console.WriteLine("                  >>> Lectura y Escritura del excel completada");
+            Console.WriteLine(" OK");
 
             Function_Procedure_Oracle(conexion, 2, "PKG_CARGARARCHIVOSAUTO.P_UPD_BUSCA_BANCOMONEDACUENTA", "PIid_archivo", vId_Archivo, "", -1, "", -1);
             string datobuscado = SelectFromWhere(conexion, "SELECT DISTINCT CODIGOBANCO FROM ARCHIVOSCONCIBANCATMP WHERE ID_ARCHIVO = " + vId_Archivo + " AND ROWNUM = 1", false);
@@ -348,6 +351,15 @@ namespace LectorExcelConciliacion
                 if (vParametros > 0)
                     vEstadoParametros = 5;
                 InsUpdDel_Oracle(conexion, "UPDATE ARCHIVOSCONCIBANCATMP SET ESTADO = " + vEstadoParametros + " WHERE ID_ARCHIVO = " + vId_Archivo + " AND CODIGOBANCO = " + vCodigoBanco + " AND TIPOCARGA = " + vTipoCarga);
+                
+                if (vEstadoParametros % 2 == 1)
+                {
+                    Console.WriteLine("                  >>> APROBADO");
+                }
+                else
+                {
+                    Console.WriteLine("                  >>> RECHAZADO");
+                }
 
                 Function_Procedure_Oracle(conexion, 2, "PKG_CARGARARCHIVOSAUTO.P_GEN_CONCARGAPRIMERATMP", "PIid_archivo", vId_Archivo, "", -1, "", -1);
                 Console.Write("                  >>> Generando Caja y Conciliando. " + DateTime.Now.ToString("HH:mm:ss") + " ... ");
