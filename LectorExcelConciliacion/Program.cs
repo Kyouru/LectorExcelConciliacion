@@ -343,11 +343,11 @@ namespace LectorExcelConciliacion
                 int vCodigoBanco = Convert.ToInt32(datobuscado);
                 
                 //BBVA
-                //eliminar caracter "Espacio Duro" del numero de movimiento
+                //eliminar caracter "Espacio Duro" del numero de movimiento (HTML)
                 if (vCodigoBanco == 6)
                 {
                     Console.WriteLine("                  >>> Removiendo Espacio Duro en el campo Num. Mvto (BBVA)");
-                    InsUpdDel_Oracle(conexion, "UPDATE ARCHIVOSCONCIBANCATMP SET CAMPO_E = REPLACE(CAMPO_E, ' ', '') WHERE ID_ARCHIVO = " + vId_Archivo + " AND CODIGOBANCO = " + vCodigoBanco);
+                    InsUpdDel_Oracle(conexion, "UPDATE ARCHIVOSCONCIBANCATMP SET CAMPO_E = REPLACE(CAMPO_E, ' ', '') WHERE ID_ARCHIVO = " + vId_Archivo);
                 }
 
                 int vTipoCarga = Convert.ToInt32(Function_Procedure_Oracle(conexion, 1, "PKG_CARGARARCHIVOSAUTO.F_OBT_BUSCA_TIPOCARGABANCO", "PIid_archivo", vId_Archivo, "PIcodigobanco", vCodigoBanco, "", -1));
