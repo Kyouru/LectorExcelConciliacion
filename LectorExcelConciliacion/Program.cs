@@ -234,7 +234,7 @@ namespace LectorExcelConciliacion
             if (!File.Exists(xlsFilePath))
                 return;
 
-            Console.Write("                  >>> Lectura y Escritura del excel " + DateTime.Now.ToString("HH:mm:ss") + " ... ");
+            Console.WriteLine("                  >>> " + DateTime.Now.ToString("HH:mm:ss") + ": Lectura y Escritura del excel... ");
             FileInfo fi = new FileInfo(xlsFilePath);
             long filesize = fi.Length;
 
@@ -342,9 +342,8 @@ namespace LectorExcelConciliacion
             ReleaseObject(xlWorkSheet);
             ReleaseObject(xlWorkBook);
             ReleaseObject(xlApp);
-            
-            Console.WriteLine(DateTime.Now.ToString("HH:mm:ss"));
 
+            Console.WriteLine("                  >>> " + DateTime.Now.ToString("HH:mm:ss") + ": Validando Banco-Moneda-Cuenta... ");
             Function_Procedure_Oracle(conexion, 2, "PKG_CARGARARCHIVOSAUTO.P_UPD_BUSCA_BANCOMONEDACUENTA", "PIid_archivo", vId_Archivo, "", -1, "", -1);
             string codigobanco = SelectFromWhere(conexion, "SELECT DISTINCT CODIGOBANCO FROM ARCHIVOSCONCIBANCATMP WHERE ID_ARCHIVO = " + vId_Archivo + " AND ROWNUM = 1", false);
 
@@ -356,60 +355,59 @@ namespace LectorExcelConciliacion
                 //eliminar caracter "Espacio Duro" del numero de movimiento (HTML)
                 if (vCodigoBanco == 6)
                 {
-                    Console.Write("                  >>> Removiendo Espacio Duro en el campo Num. Mvto (BBVA) " + DateTime.Now.ToString("HH:mm:ss") + " ... ");
+                    Console.WriteLine("                  >>> " + DateTime.Now.ToString("HH:mm:ss") + ": Removiendo Espacio Duro en el campo Num. Mvto (BBVA) ");
                     InsUpdDel_Oracle(conexion, "UPDATE ARCHIVOSCONCIBANCATMP SET CAMPO_E = REPLACE(CAMPO_E, ' ', '') WHERE ID_ARCHIVO = " + vId_Archivo);
-                    Console.WriteLine(DateTime.Now.ToString("HH:mm:ss"));
                 }
 
 
-                Console.Write("                  >>> Buscando Tipo Carga " + DateTime.Now.ToString("HH:mm:ss") + " ... ");
+                Console.WriteLine("                  >>> " + DateTime.Now.ToString("HH:mm:ss") + ": Buscando Tipo Carga... ");
                 int vTipoCarga = Convert.ToInt32(Function_Procedure_Oracle(conexion, 1, "PKG_CARGARARCHIVOSAUTO.F_OBT_BUSCA_TIPOCARGABANCO", "PIid_archivo", vId_Archivo, "PIcodigobanco", vCodigoBanco, "", -1));
                 int vEstadoTipoCarga = 4;
                 if (vTipoCarga > 0)
                     vEstadoTipoCarga = 3;
                 InsUpdDel_Oracle(conexion, "UPDATE ARCHIVOSCONCIBANCATMP SET TIPOCARGA = " + vTipoCarga + ", ESTADO = " + vEstadoTipoCarga + " WHERE ID_ARCHIVO = " + vId_Archivo + " AND CODIGOBANCO = " + vCodigoBanco);
-                Console.WriteLine(DateTime.Now.ToString("HH:mm:ss"));
 
 
-                Console.Write("                  >>> Buscando Parametros " + DateTime.Now.ToString("HH:mm:ss") + " ... ");
+                Console.WriteLine("                  >>> " + DateTime.Now.ToString("HH:mm:ss") + ": Buscando Parametros... ");
                 int vParametros = Convert.ToInt32(Function_Procedure_Oracle(conexion, 1, "PKG_CARGARARCHIVOSAUTO.F_UPD_BUSCA_EXISTEPARAMETRO", "PIid_archivo", vId_Archivo, "PIcodigobanco", vCodigoBanco, "PItipocarga", vTipoCarga));
                 int vEstadoParametros = 6;
                 if (vParametros > 0)
                     vEstadoParametros = 5;
                 InsUpdDel_Oracle(conexion, "UPDATE ARCHIVOSCONCIBANCATMP SET ESTADO = " + vEstadoParametros + " WHERE ID_ARCHIVO = " + vId_Archivo + " AND CODIGOBANCO = " + vCodigoBanco + " AND TIPOCARGA = " + vTipoCarga);
-                Console.WriteLine(DateTime.Now.ToString("HH:mm:ss"));
 
-                Console.Write("                  >>> Buscando Num. Cta. " + DateTime.Now.ToString("HH:mm:ss") + " ... ");
+                Console.Write("                  >>> " + DateTime.Now.ToString("HH:mm:ss") + ": Buscando Num. Cta... ");
                 string vCodigoCuenta = SelectFromWhere(conexion, "SELECT DISTINCT NUMEROCUENTA FROM ARCHIVOSCONCIBANCATMP WHERE ID_ARCHIVO = " + vId_Archivo + " AND ROWNUM = 1", false);
-                Console.WriteLine(DateTime.Now.ToString("HH:mm:ss") + ". Num. Cta: " + vCodigoCuenta);
+                Console.WriteLine(vCodigoCuenta);
 
                 if (vEstadoParametros % 2 == 1)
                 {
-                    Console.WriteLine("                  >>> APROBADO");
+                    Console.WriteLine("                  >>> " + DateTime.Now.ToString("HH:mm:ss") + ": APROBADO");
                 }
                 else
                 {
-                    Console.WriteLine("                  >>> RECHAZADO");
+                    Console.WriteLine("                  >>> " + DateTime.Now.ToString("HH:mm:ss") + ": RECHAZADO");
                     return;
                 }
 
 
                 if (!(String.IsNullOrEmpty(vCodigoCuenta)))
                 {
-                    Console.Write("                  >>> Insertando en CONCARGAPRIMERATMP. " + DateTime.Now.ToString("HH:mm:ss") + " ... ");
+                    Console.WriteLine("                  >>> " + DateTime.Now.ToString("HH:mm:ss") + ": Insertando en CONCARGAPRIMERATMP... ");
                     Function_Procedure_Oracle(conexion, 2, "PKG_CARGARARCHIVOSAUTO.P_GEN_CONCARGAPRIMERATMP", "PIid_archivo", vId_Archivo, "", -1, "", -1);
-                    Console.WriteLine(DateTime.Now.ToString("HH:mm:ss"));
+
+                    //Sin parametros
+                    //Function_Procedure_Oracle(conexion, 2, "PKG_CARGARARCHIVOSAUTO.P_GEN_CARGABANCOS_CAJA", "", -1, "", -1, "", -1);
 
                     using (OracleConnection connection =
                            new OracleConnection(conexion))
                     {
                         try
                         {
-                            Console.Write("                  >>> Generando Caja y Conciliando. " + DateTime.Now.ToString("HH:mm:ss") + " ... ");
+                            Console.WriteLine("                  >>> " + DateTime.Now.ToString("HH:mm:ss") + ": Generando Caja y Conciliando... ");
 
                             OracleCommand command = new OracleCommand("PKG_CARGARARCHIVOSAUTO.P_GEN_CARGABANCOS_CAJA", connection) { CommandType = CommandType.StoredProcedure };
 
-                            var prm1 = new OracleParameter("PIvalcuentabanco", OracleDbType.Varchar2) { Direction = ParameterDirection.Input, Value = vCodigoCuenta };
+                            var prm1 = new OracleParameter("PIvalarchivocarga", OracleDbType.Varchar2) { Direction = ParameterDirection.Input, Value = Path.GetFileName(xlsFilePath) };
                             command.Parameters.Add(prm1);
 
                             connection.Open();
@@ -419,13 +417,15 @@ namespace LectorExcelConciliacion
                             connection.Close();
                             command.Dispose();
 
-                            Console.WriteLine(DateTime.Now.ToString("HH:mm:ss"));
+                            Console.WriteLine("                  >>> " + DateTime.Now.ToString("HH:mm:ss") + ": Fin.");
                         }
                         catch (Exception ex)
                         {
                             Console.WriteLine(ex.Message);
                         }
                     }
+
+                    //
                 }
                 else
                 {
