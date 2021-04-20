@@ -155,10 +155,16 @@ namespace LectorExcelConciliacion
                 Console.Write(" Buscardo archivos en la carpeta input...");
                 string[] dirs = Directory.GetFiles(rutainput);
 
+
                 if (dirs.Length > 0)
                 {
                     Console.WriteLine(" OK");
-                    Console.WriteLine("  Se encontró " + dirs.Length + " archivos");
+                    Console.WriteLine("  Se encontró " + dirs.Length + " archivos:");
+
+                    foreach (string dir in dirs)
+                    {
+                        Console.WriteLine("   > " + dir);
+                    }
                 }
                 else
                 {
@@ -218,13 +224,17 @@ namespace LectorExcelConciliacion
                 Read_file(Path.Combine(rutawork, filename), varchivovalido, conexion);
                 Readed_file(Path.Combine(rutawork, filename), rutaoutput, conexion);
             }
+            else
+            {
+                Console.WriteLine(" >>> Rechazado: Nombre Archivo no se encuentra parametrizado en la tabla CONCARGARCHIVOS");
+            }
         }
         public static void Read_file(string xlsFilePath, string ArchivoValido, string conexion)
         {
             if (!File.Exists(xlsFilePath))
                 return;
 
-            Console.Write("                  >>> Lectura y Escritura del excel... ");
+            Console.Write("                  >>> Lectura y Escritura del excel " + DateTime.Now.ToString("HH:mm:ss") + " ... ");
             FileInfo fi = new FileInfo(xlsFilePath);
             long filesize = fi.Length;
 
@@ -333,33 +343,45 @@ namespace LectorExcelConciliacion
             ReleaseObject(xlWorkBook);
             ReleaseObject(xlApp);
             
-            Console.WriteLine(" OK");
+            Console.WriteLine(DateTime.Now.ToString("HH:mm:ss"));
 
             Function_Procedure_Oracle(conexion, 2, "PKG_CARGARARCHIVOSAUTO.P_UPD_BUSCA_BANCOMONEDACUENTA", "PIid_archivo", vId_Archivo, "", -1, "", -1);
-            string datobuscado = SelectFromWhere(conexion, "SELECT DISTINCT CODIGOBANCO FROM ARCHIVOSCONCIBANCATMP WHERE ID_ARCHIVO = " + vId_Archivo + " AND ROWNUM = 1", false);
+            string codigobanco = SelectFromWhere(conexion, "SELECT DISTINCT CODIGOBANCO FROM ARCHIVOSCONCIBANCATMP WHERE ID_ARCHIVO = " + vId_Archivo + " AND ROWNUM = 1", false);
 
-            if (!(String.IsNullOrEmpty(datobuscado)))
+            if (!(String.IsNullOrEmpty(codigobanco)))
             {
-                int vCodigoBanco = Convert.ToInt32(datobuscado);
+                int vCodigoBanco = Convert.ToInt32(codigobanco);
                 
                 //BBVA
                 //eliminar caracter "Espacio Duro" del numero de movimiento (HTML)
                 if (vCodigoBanco == 6)
                 {
-                    Console.WriteLine("                  >>> Removiendo Espacio Duro en el campo Num. Mvto (BBVA)");
+                    Console.Write("                  >>> Removiendo Espacio Duro en el campo Num. Mvto (BBVA) " + DateTime.Now.ToString("HH:mm:ss") + " ... ");
                     InsUpdDel_Oracle(conexion, "UPDATE ARCHIVOSCONCIBANCATMP SET CAMPO_E = REPLACE(CAMPO_E, ' ', '') WHERE ID_ARCHIVO = " + vId_Archivo);
+                    Console.WriteLine(DateTime.Now.ToString("HH:mm:ss"));
                 }
 
+
+                Console.Write("                  >>> Buscando Tipo Carga " + DateTime.Now.ToString("HH:mm:ss") + " ... ");
                 int vTipoCarga = Convert.ToInt32(Function_Procedure_Oracle(conexion, 1, "PKG_CARGARARCHIVOSAUTO.F_OBT_BUSCA_TIPOCARGABANCO", "PIid_archivo", vId_Archivo, "PIcodigobanco", vCodigoBanco, "", -1));
                 int vEstadoTipoCarga = 4;
                 if (vTipoCarga > 0)
                     vEstadoTipoCarga = 3;
                 InsUpdDel_Oracle(conexion, "UPDATE ARCHIVOSCONCIBANCATMP SET TIPOCARGA = " + vTipoCarga + ", ESTADO = " + vEstadoTipoCarga + " WHERE ID_ARCHIVO = " + vId_Archivo + " AND CODIGOBANCO = " + vCodigoBanco);
+                Console.WriteLine(DateTime.Now.ToString("HH:mm:ss"));
+
+
+                Console.Write("                  >>> Buscando Parametros " + DateTime.Now.ToString("HH:mm:ss") + " ... ");
                 int vParametros = Convert.ToInt32(Function_Procedure_Oracle(conexion, 1, "PKG_CARGARARCHIVOSAUTO.F_UPD_BUSCA_EXISTEPARAMETRO", "PIid_archivo", vId_Archivo, "PIcodigobanco", vCodigoBanco, "PItipocarga", vTipoCarga));
                 int vEstadoParametros = 6;
                 if (vParametros > 0)
                     vEstadoParametros = 5;
                 InsUpdDel_Oracle(conexion, "UPDATE ARCHIVOSCONCIBANCATMP SET ESTADO = " + vEstadoParametros + " WHERE ID_ARCHIVO = " + vId_Archivo + " AND CODIGOBANCO = " + vCodigoBanco + " AND TIPOCARGA = " + vTipoCarga);
+                Console.WriteLine(DateTime.Now.ToString("HH:mm:ss"));
+
+                Console.Write("                  >>> Buscando Num. Cta. " + DateTime.Now.ToString("HH:mm:ss") + " ... ");
+                string vCodigoCuenta = SelectFromWhere(conexion, "SELECT DISTINCT NUMEROCUENTA FROM ARCHIVOSCONCIBANCATMP WHERE ID_ARCHIVO = " + vId_Archivo + " AND ROWNUM = 1", false);
+                Console.WriteLine(DateTime.Now.ToString("HH:mm:ss") + ". Num. Cta: " + vCodigoCuenta);
 
                 if (vEstadoParametros % 2 == 1)
                 {
@@ -368,14 +390,47 @@ namespace LectorExcelConciliacion
                 else
                 {
                     Console.WriteLine("                  >>> RECHAZADO");
+                    return;
                 }
 
-                Function_Procedure_Oracle(conexion, 2, "PKG_CARGARARCHIVOSAUTO.P_GEN_CONCARGAPRIMERATMP", "PIid_archivo", vId_Archivo, "", -1, "", -1);
 
-                //demora
-                Console.Write("                  >>> Generando Caja y Conciliando. " + DateTime.Now.ToString("HH:mm:ss") + " ... ");
-                Function_Procedure_Oracle(conexion, 2, "PKG_CARGARARCHIVOSAUTO.P_GEN_CARGABANCOS_CAJA", "", -1, "", -1, "", -1);
-                Console.WriteLine(DateTime.Now.ToString("HH:mm:ss"));
+                if (!(String.IsNullOrEmpty(vCodigoCuenta)))
+                {
+                    Console.Write("                  >>> Insertando en CONCARGAPRIMERATMP. " + DateTime.Now.ToString("HH:mm:ss") + " ... ");
+                    Function_Procedure_Oracle(conexion, 2, "PKG_CARGARARCHIVOSAUTO.P_GEN_CONCARGAPRIMERATMP", "PIid_archivo", vId_Archivo, "", -1, "", -1);
+                    Console.WriteLine(DateTime.Now.ToString("HH:mm:ss"));
+
+                    using (OracleConnection connection =
+                           new OracleConnection(conexion))
+                    {
+                        try
+                        {
+                            Console.Write("                  >>> Generando Caja y Conciliando. " + DateTime.Now.ToString("HH:mm:ss") + " ... ");
+
+                            OracleCommand command = new OracleCommand("PKG_CARGARARCHIVOSAUTO.P_GEN_CARGABANCOS_CAJA", connection) { CommandType = CommandType.StoredProcedure };
+
+                            var prm1 = new OracleParameter("PIvalcuentabanco", OracleDbType.Varchar2) { Direction = ParameterDirection.Input, Value = vCodigoCuenta };
+                            command.Parameters.Add(prm1);
+
+                            connection.Open();
+
+                            command.ExecuteNonQuery();
+
+                            connection.Close();
+                            command.Dispose();
+
+                            Console.WriteLine(DateTime.Now.ToString("HH:mm:ss"));
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine(ex.Message);
+                        }
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("                  >>> Error: Codigo Cuenta Errada");
+                }
             }
             else
             {
@@ -416,7 +471,7 @@ namespace LectorExcelConciliacion
                     OracleDataReader reader = command.ExecuteReader();
                     while (reader.Read())
                     {
-                        vfileoutput = rutaoutput + subPath + Path.DirectorySeparatorChar + Path.GetFileName(xlsFilePath);
+                        vfileoutput = rutaoutput + subPath + Path.DirectorySeparatorChar + Path.GetFileNameWithoutExtension(xlsFilePath); //Path.GetFileName
                         vfileoutput += "_" + reader["APROBADO"].ToString();
                         vfileoutput += "_" + reader["BANCO"].ToString().Replace(" ", "_");
                         vfileoutput += "_" + reader["MONEDA"].ToString();
@@ -514,8 +569,8 @@ namespace LectorExcelConciliacion
         public static string Function_Procedure_Oracle(string conexion, int tipofunpro /* tipofunpro: 1 para function, 2 para procedure  */, string executequery, string nomprmt1, int prmt1, string nomprmt2, int prmt2, string nomprmt3, int prmt3)
         {
             string vDATO = "";
-        using (OracleConnection connection =
-               new OracleConnection(conexion))
+            using (OracleConnection connection =
+                   new OracleConnection(conexion))
             {
                 try
                 {
