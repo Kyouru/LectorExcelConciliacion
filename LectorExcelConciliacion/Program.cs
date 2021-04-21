@@ -122,10 +122,11 @@ namespace LectorExcelConciliacion
                             Console.Write(" Moviendo archivo a ruta Work... ");
                             try
                             {
-                                File.Move(args[1 + offset], Path.Combine(rutawork, Path.GetFileName(args[1 + offset])));
+                                string nombrearchivo = Path.Combine(rutawork, Path.GetFileNameWithoutExtension(args[1 + offset]) + "_" + currentProcess.Id + Path.GetExtension(args[1 + offset]));
+                                File.Move(args[1 + offset], nombrearchivo);
                                 Console.WriteLine(" OK");
-                                Console.WriteLine("    Procesando >> " + args[1 + offset]);
-                                ExecuteExcel(Path.GetFileName(args[1 + offset]), rutawork, rutaoutput, conexion);
+                                Console.WriteLine("    Procesando >> " + nombrearchivo);
+                                ExecuteExcel(Path.GetFileName(nombrearchivo), rutawork, rutaoutput, conexion);
                             }
                             catch (Exception ex)
                             {
@@ -183,7 +184,9 @@ namespace LectorExcelConciliacion
                 {
                     try
                     {
-                        File.Move(dir, Path.Combine(rutawork, Path.GetFileName(dir)));
+                        string nombrearchivo = Path.Combine(rutawork, Path.GetFileNameWithoutExtension(dir) + "_" + currentProcess.Id + Path.GetExtension(dir));
+                        File.Move(dir, nombrearchivo);
+
                     }
                     catch (Exception ex)
                     {
@@ -328,9 +331,14 @@ namespace LectorExcelConciliacion
                 if (nFilaNada > 10)
                     rows = row++;
 
-                queryinsert = "INSERT INTO ARCHIVOSCONCIBANCATMP (CAMPO_A, CAMPO_B, CAMPO_C, CAMPO_D, CAMPO_E, CAMPO_F, CAMPO_G, CAMPO_H, CAMPO_I, CAMPO_J, CAMPO_K, CAMPO_L, CAMPO_M, CAMPO_N, CAMPO_O, CAMPO_P, CAMPO_Q, CAMPO_R, CAMPO_S, CAMPO_T, ID_ARCHIVO, NOMBREARCHIVO, TAMANOARCHIVO, ID_FILAS, ESTADO, ARCHIVOVALIDO) ";
-                queryvalues = "VALUES ('" + vCampo_A + "', '" + vCampo_B + "', '" + vCampo_C + "', '" + vCampo_D + "', '" + vCampo_E + "', '" + vCampo_F + "', '" + vCampo_G + "', '" + vCampo_H + "', '" + vCampo_I + "', '" + vCampo_J + "', '" + vCampo_K + "', '" + vCampo_L + "', '" + vCampo_M + "', '" + vCampo_N + "', '" + vCampo_O + "', '" + vCampo_P + "', '" + vCampo_Q + "', '" + vCampo_R + "', '" + vCampo_S + "', '" + vCampo_T + "', " + vId_Archivo + ", '" + xlsFilePath + "', " + filesize + ", " + row + ", " + 0 /* 0 para Estado Carga Inicial */ + ", '" + ArchivoValido + "')";
-                InsUpdDel_Oracle(conexion, queryinsert + queryvalues);
+                //Caracter  indica Ultima Fila Santander
+                if (vCampo_A != "")
+                {
+                    queryinsert = "INSERT INTO ARCHIVOSCONCIBANCATMP (CAMPO_A, CAMPO_B, CAMPO_C, CAMPO_D, CAMPO_E, CAMPO_F, CAMPO_G, CAMPO_H, CAMPO_I, CAMPO_J, CAMPO_K, CAMPO_L, CAMPO_M, CAMPO_N, CAMPO_O, CAMPO_P, CAMPO_Q, CAMPO_R, CAMPO_S, CAMPO_T, ID_ARCHIVO, NOMBREARCHIVO, TAMANOARCHIVO, ID_FILAS, ESTADO, ARCHIVOVALIDO) ";
+                    queryvalues = "VALUES ('" + vCampo_A + "', '" + vCampo_B + "', '" + vCampo_C + "', '" + vCampo_D + "', '" + vCampo_E + "', '" + vCampo_F + "', '" + vCampo_G + "', '" + vCampo_H + "', '" + vCampo_I + "', '" + vCampo_J + "', '" + vCampo_K + "', '" + vCampo_L + "', '" + vCampo_M + "', '" + vCampo_N + "', '" + vCampo_O + "', '" + vCampo_P + "', '" + vCampo_Q + "', '" + vCampo_R + "', '" + vCampo_S + "', '" + vCampo_T + "', " + vId_Archivo + ", '" + xlsFilePath + "', " + filesize + ", " + row + ", " + 0 /* 0 para Estado Carga Inicial */ + ", '" + ArchivoValido + "')";
+                    InsUpdDel_Oracle(conexion, queryinsert + queryvalues);
+                }
+
             }
             InsUpdDel_Oracle(conexion, "DELETE FROM ARCHIVOSCONCIBANCATMP WHERE ID_ARCHIVO = " + vId_Archivo + " AND ID_FILAS > " + nFilaAlgo);
 
