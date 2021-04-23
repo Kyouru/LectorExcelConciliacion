@@ -9,7 +9,7 @@ Puede trabajar con múltiples instancias.
 ### Uso
 
 ```powershell
-.\LectorExcelConciliacion.exe <-nopause> <-hide> <-killall> <-file (rutacompleta) .. -file (rutacompleta)>
+.\LectorExcelConciliacion.exe <-nopause> <-hide> <-killall> <-file (rutacompleta) .. -file (rutacompleta)> <-path (rutacompleta)>
   -nopause: Finaliza la aplicación al terminar las operaciones. Por defecto, pausa la aplicación.
   -hide: Oculta la consola.
   -killall: Termina todos los procesos en ejecución de nombre LectorExcelConciliacion.exe.
