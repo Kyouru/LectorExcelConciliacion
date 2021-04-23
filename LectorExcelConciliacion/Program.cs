@@ -78,7 +78,7 @@ namespace LectorExcelConciliacion
             bool fileindividual = false;
             while (args.Length - offset > 0)
             {
-                if (args[0 + offset] == "-help" || args[0 + offset] == "--help" || args[0 + offset] == "-nopause" || args[0 + offset] == "-hide" || args[0 + offset] == "-killall" || args[0 + offset] == "-file")
+                if (args[0 + offset] == "-help" || args[0 + offset] == "--help" || args[0 + offset] == "-nopause" || args[0 + offset] == "-hide" || args[0 + offset] == "-killall" || args[0 + offset] == "-file" || args[0 + offset] == "-path")
                 {
                     if (args[0 + offset] == "-help" || args[0 + offset] == "--help")
                     {
@@ -139,6 +139,11 @@ namespace LectorExcelConciliacion
                         }
                         offset += 2;
                     }
+                    else if (args[0 + offset] == "-path")
+                    {
+                        rutainput = args[1 + offset];
+                        offset += 2;
+                    }
                 }
                 else
                 {
@@ -150,10 +155,10 @@ namespace LectorExcelConciliacion
                 }
             }
 
-            //Caso no halla parametro -file, revisa carpeta INPUT
+            //Caso no halla parametro -file, revisa carpeta
             if (!fileindividual)
             {
-                Console.Write(" Buscardo archivos en la carpeta input...");
+                Console.Write(" Buscardo archivos en la carpeta...");
                 string[] dirs = Directory.GetFiles(rutainput);
 
 
@@ -169,7 +174,7 @@ namespace LectorExcelConciliacion
                 }
                 else
                 {
-                    Console.WriteLine("  No se encontró archivos en la ruta input\n  Ruta: " + rutainput);
+                    Console.WriteLine("  No se encontró archivos en la ruta\n  Ruta: " + rutainput);
                     if (pause)
                     {
                         Console.WriteLine("Presione cualquier tecla para salir...");

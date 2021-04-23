@@ -14,6 +14,7 @@ Puede trabajar con múltiples instancias.
   -hide: Oculta la consola.
   -killall: Termina todos los procesos en ejecución de nombre LectorExcelConciliacion.exe.
   -file (rutacompleta): Procesa el archivo especifico.
+  -path (rutacompleta): Procesa los archivos contenidos en la carpeta especifica.
   Sin parametro -file: Procesa todos los archivos en la carpeta INPUT
 ```
 
