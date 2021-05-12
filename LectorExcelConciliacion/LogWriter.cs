@@ -26,6 +26,7 @@ namespace LectorExcelConciliacion
                 using (StreamWriter w = File.AppendText(Rutawork + "\\" + DateTime.Now.ToString("yyyy-MM-dd") +".txt"))
                 {
                     w.Write(log);
+                    log = "";
                     w.Close();
                 }
             }

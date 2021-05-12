@@ -141,6 +141,8 @@ namespace LectorExcelConciliacion
                     LogWriter.addLog("Error obteniendo la ruta " + name, true);
                     LogWriter.LogWrite();
                 }
+                LogWriter.addLog("Fin", false);
+                LogWriter.LogWrite();
                 Environment.Exit(0);
             }
             else if (!Directory.Exists(obtRuta))
@@ -151,6 +153,8 @@ namespace LectorExcelConciliacion
                     LogWriter.addLog("Ruta " + name + " no encontrada. " + obtRuta, true);
                     LogWriter.LogWrite();
                 }
+                LogWriter.addLog("Fin", false);
+                LogWriter.LogWrite();
                 Environment.Exit(0);
             }
             return obtRuta + Path.DirectorySeparatorChar;

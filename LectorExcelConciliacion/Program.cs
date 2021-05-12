@@ -53,88 +53,88 @@ namespace LectorExcelConciliacion
             //ruta WORK
             string rutawork = oracleFunctions.ObtRuta(29, "WORK");
 
-            oracleFunctions = null;
-
             //inicio log
             LogWriter logWriter = new LogWriter(rutawork);
-            logWriter.addLog("Inicio", false);
-            //Sub carpeta dentro de WORK
-            string rutasubwork = rutawork + currentProcess.Id + Path.DirectorySeparatorChar;
-            if (!Directory.Exists(rutasubwork))
-            {
-                try
-                {
-                    Directory.CreateDirectory(rutasubwork);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine("Error creando carpeta WORK" + Path.DirectorySeparatorChar + currentProcess.Id + Path.DirectorySeparatorChar);
-                    Console.WriteLine(ex.Message);
-                    logWriter.addLog(ex.Message, true);
-                    logWriter.LogWrite();
-                    Environment.Exit(0);
-                }
-            }
-            else
-            {
-                BorrarSubWork(rutasubwork, currentProcess.Id, false, logWriter);
-                Directory.CreateDirectory(rutasubwork);
-            }
-            //
 
-            int offset = 0;
-            bool pause = true;
-            bool fileindividual = false;
-            while (args.Length - offset > 0)
+            try
             {
-                if (args[0 + offset] == "-help" || args[0 + offset] == "--help" || args[0 + offset] == "-nopause" || args[0 + offset] == "-hide" || args[0 + offset] == "-killall" || args[0 + offset] == "-file" || args[0 + offset] == "-path")
+                logWriter.addLog("Inicio", false);
+                //Sub carpeta dentro de WORK
+                string rutasubwork = rutawork + currentProcess.Id + Path.DirectorySeparatorChar;
+                if (!Directory.Exists(rutasubwork))
                 {
-                    if (args[0 + offset] == "-help" || args[0 + offset] == "--help")
+                    try
                     {
-                        BorrarSubWork(rutasubwork, currentProcess.Id, true, logWriter);
-                        logWriter.LogWrite();
-                        ArgInvalid(false, false);
+                        Directory.CreateDirectory(rutasubwork);
                     }
-                    if (args[0 + offset] == "-nopause")
+                    catch (Exception ex2)
                     {
-                        pause = false;
-                        offset++;
-                    }
-                    else if (args[0 + offset] == "-hide")
-                    {
-                        ShowWindow(handle, SW_HIDE);
-                        //ShowWindow(handle, SW_SHOW);
-                        offset++;
-                    }
-                    else if (args[0 + offset] == "-killall")
-                    {
-                        foreach (var process in Process.GetProcessesByName("LectorExcelConciliacion"))
-                        {
-                            if (process.Id != currentProcess.Id)
-                            {
-                                process.Kill();
-                                Console.WriteLine(" LectorExcelConciliacion con PID " + process.Id + " cerrado.");
-                                logWriter.addLog(" LectorExcelConciliacion con PID " + process.Id + " cerrado.", false);
-                            }
-                        }
-                        BorrarSubWork(rutasubwork, currentProcess.Id, true, logWriter);
+                        Console.WriteLine("Error creando carpeta WORK" + Path.DirectorySeparatorChar + currentProcess.Id + Path.DirectorySeparatorChar);
+                        Console.WriteLine(ex2.Message);
+                        logWriter.addLog(ex2.Message, true);
+                        logWriter.addLog("Fin", false);
                         logWriter.LogWrite();
                         Environment.Exit(0);
                     }
-                    else if (args[0 + offset] == "-file")
+                }
+                else
+                {
+                    BorrarSubWork(rutasubwork, currentProcess.Id, false, logWriter);
+                    Directory.CreateDirectory(rutasubwork);
+                }
+                //
+
+                int offset = 0;
+                bool pause = true;
+                bool fileindividual = false;
+                while (args.Length - offset > 0)
+                {
+                    if (args[0 + offset] == "-help" || args[0 + offset] == "--help" || args[0 + offset] == "-nopause" || args[0 + offset] == "-hide" || args[0 + offset] == "-killall" || args[0 + offset] == "-file" || args[0 + offset] == "-path")
                     {
-                        fileindividual = true;
-                        if (args[1 + offset] == null)
+                        if (args[0 + offset] == "-help" || args[0 + offset] == "--help")
                         {
                             BorrarSubWork(rutasubwork, currentProcess.Id, true, logWriter);
-                            logWriter.LogWrite();
-                            ArgInvalid(false, true);
+                            ArgInvalid(false, false);
                         }
-                        if (File.Exists(args[1 + offset]))
+                        if (args[0 + offset] == "-nopause")
                         {
-                            Console.Write(" Moviendo archivo a ruta Work... ");
-                            try
+                            pause = false;
+                            offset++;
+                        }
+                        else if (args[0 + offset] == "-hide")
+                        {
+                            ShowWindow(handle, SW_HIDE);
+                            //ShowWindow(handle, SW_SHOW);
+                            offset++;
+                        }
+                        else if (args[0 + offset] == "-killall")
+                        {
+                            foreach (var process in Process.GetProcessesByName("LectorExcelConciliacion"))
                             {
+                                if (process.Id != currentProcess.Id)
+                                {
+                                    process.Kill();
+                                    Console.WriteLine(" LectorExcelConciliacion con PID " + process.Id + " cerrado.");
+                                    logWriter.addLog(" LectorExcelConciliacion con PID " + process.Id + " cerrado.", false);
+                                }
+                            }
+                            BorrarSubWork(rutasubwork, currentProcess.Id, true, logWriter);
+                            logWriter.addLog("Fin", false);
+                            logWriter.LogWrite();
+                            Environment.Exit(0);
+                        }
+                        else if (args[0 + offset] == "-file")
+                        {
+                            fileindividual = true;
+                            if (args[1 + offset] == null)
+                            {
+                                BorrarSubWork(rutasubwork, currentProcess.Id, true, logWriter);
+                                logWriter.LogWrite();
+                                ArgInvalid(false, true);
+                            }
+                            if (File.Exists(args[1 + offset]))
+                            {
+                                Console.Write(" Moviendo archivo a ruta Work... ");
                                 string nombrearchivo = Path.Combine(rutasubwork, Path.GetFileNameWithoutExtension(args[1 + offset]) + "_" + currentProcess.Id + Path.GetExtension(args[1 + offset]));
                                 File.Move(args[1 + offset], nombrearchivo);
                                 Console.WriteLine(" OK");
@@ -142,322 +142,324 @@ namespace LectorExcelConciliacion
                                 Console.WriteLine("    Procesando >> " + nombrearchivo);
                                 ExecuteExcel(Path.GetFileName(nombrearchivo), rutasubwork, rutaoutput, conexion, logWriter);
                             }
-                            catch (Exception ex)
+                            else
                             {
-                                Console.WriteLine(ex.Message);
-                                logWriter.addLog(ex.Message, true);
+                                Console.WriteLine(" Archivo no encontrado\n Ruta: " + args[1 + offset]);
+                                logWriter.addLog(" Archivo no encontrado\n Ruta: " + args[1 + offset], true);
                             }
+                            offset += 2;
                         }
-                        else
+                        else if (args[0 + offset] == "-path")
                         {
-                            Console.WriteLine(" Archivo no encontrado\n Ruta: " + args[1 + offset]);
-                            logWriter.addLog(" Archivo no encontrado\n Ruta: " + args[1 + offset], true);
+                            rutainput = args[1 + offset];
+                            offset += 2;
                         }
-                        offset += 2;
-                    }
-                    else if (args[0 + offset] == "-path")
-                    {
-                        rutainput = args[1 + offset];
-                        offset += 2;
-                    }
-                }
-                else
-                {
-                    BorrarSubWork(rutasubwork, currentProcess.Id, true, logWriter);
-                    if (offset == 0)
-                    {
-                        logWriter.LogWrite();
-                        ArgInvalid(true, true);
                     }
                     else
                     {
+                        BorrarSubWork(rutasubwork, currentProcess.Id, true, logWriter);
+                        if (offset == 0)
+                        {
+                            logWriter.LogWrite();
+                            ArgInvalid(true, true);
+                        }
+                        else
+                        {
+                            logWriter.LogWrite();
+                            ArgInvalid(pause, true);
+                        }
+                    }
+                }
+
+                //Caso no halla parametro -file, revisa carpeta
+                if (!fileindividual)
+                {
+                    Console.Write(" Buscardo archivos en la carpeta...");
+                    string[] dirs = Directory.GetFiles(rutainput);
+
+
+                    if (dirs.Length > 0)
+                    {
+                        Console.WriteLine(" OK");
+                        Console.WriteLine("  Se encontró " + dirs.Length + " archivos:");
+                        logWriter.addLog("Se encontró " + dirs.Length + " archivos", false);
+
+                        foreach (string dir in dirs)
+                        {
+                            Console.WriteLine("   > " + dir);
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine("  No se encontró archivos en la ruta\n  Ruta: " + rutainput);
+                        if (pause)
+                        {
+                            Console.WriteLine("Presione cualquier tecla para salir...");
+                            Console.ReadKey();
+                        }
+
+                        BorrarSubWork(rutasubwork, currentProcess.Id, true, logWriter);
+                        logWriter.addLog("No se encontró archivos en la ruta: " + rutainput, true);
+                        logWriter.addLog("Fin", false);
                         logWriter.LogWrite();
-                        ArgInvalid(pause, true);
+                        Environment.Exit(0);
                     }
-                }
-            }
-
-            //Caso no halla parametro -file, revisa carpeta
-            if (!fileindividual)
-            {
-                Console.Write(" Buscardo archivos en la carpeta...");
-                string[] dirs = Directory.GetFiles(rutainput);
-
-
-                if (dirs.Length > 0)
-                {
-                    Console.WriteLine(" OK");
-                    Console.WriteLine("  Se encontró " + dirs.Length + " archivos:");
-                    logWriter.addLog("Se encontró " + dirs.Length + " archivos", false);
-
+                    Console.WriteLine(" Moviendo archivos a ruta Work...");
                     foreach (string dir in dirs)
-                    {
-                        Console.WriteLine("   > " + dir);
-                    }
-                }
-                else
-                {
-                    Console.WriteLine("  No se encontró archivos en la ruta\n  Ruta: " + rutainput);
-                    if (pause)
-                    {
-                        Console.WriteLine("Presione cualquier tecla para salir...");
-                        Console.ReadKey();
-                    }
-
-                    BorrarSubWork(rutasubwork, currentProcess.Id, true, logWriter);
-                    logWriter.addLog("No se encontró archivos en la ruta: " + rutainput, true);
-                    logWriter.LogWrite();
-                    Environment.Exit(0);
-                }
-                Console.WriteLine(" Moviendo archivos a ruta Work...");
-                foreach (string dir in dirs)
-                {
-                    try
                     {
                         string nombrearchivo = Path.Combine(rutasubwork, Path.GetFileNameWithoutExtension(dir) + "_" + currentProcess.Id + Path.GetExtension(dir));
                         File.Move(dir, nombrearchivo);
                         logWriter.addLog("Se movió " + Path.GetFileName(nombrearchivo) + " a SubWork", false);
-
                     }
-                    catch (Exception ex)
+
+                    string[] dirswork = Directory.GetFiles(rutasubwork);
+                    int count = 1;
+                    foreach (string dir in dirswork)
                     {
-                        Console.WriteLine(ex.Message);
-                        logWriter.addLog(ex.Message, true);
+                        Console.WriteLine(" Procesando " + count + "/" + dirswork.Length + " >> " + Path.GetFileName(dir));
+                        ExecuteExcel(Path.GetFileName(dir), rutasubwork, rutaoutput, conexion, logWriter);
+                        count++;
                     }
                 }
 
-                string[] dirswork = Directory.GetFiles(rutasubwork);
-                int count = 1;
-                foreach (string dir in dirswork)
+                BorrarSubWork(rutasubwork, currentProcess.Id, true, logWriter);
+                Console.WriteLine("Fin");
+                logWriter.addLog("Fin", false);
+                logWriter.LogWrite();
+                if (pause)
                 {
-                    Console.WriteLine(" Procesando " + count + "/" + dirswork.Length + " >> " + Path.GetFileName(dir));
-                    ExecuteExcel(Path.GetFileName(dir), rutasubwork, rutaoutput, conexion, logWriter);
-                    count++;
+                    Console.WriteLine("Presione cualquier tecla para salir...");
+                    Console.ReadKey();
                 }
             }
-
-            BorrarSubWork(rutasubwork, currentProcess.Id, true, logWriter);
-            Console.WriteLine("Fin");
-            logWriter.addLog("Fin", false);
-            logWriter.LogWrite();
-            if (pause)
+            catch (Exception ex)
             {
-                Console.WriteLine("Presione cualquier tecla para salir...");
-                Console.ReadKey();
+                Console.WriteLine(ex.Message);
+                logWriter.addLog(ex.Message, true);
+                logWriter.LogWrite();
             }
         }
 
         static void ExecuteExcel(string filename, string rutasubwork, string rutaoutput, string conexion, LogWriter logWriter)
         {
-            OracleFunctions oracleFunctions = new OracleFunctions(conexion, logWriter);
-            string varchivovalido = oracleFunctions.SelectFromWhere("SELECT SUBSTR(nombrearchivocarga, 1, INSTR(nombrearchivocarga, '.', 1, 1) - 1) " +
-                                                    "FROM concargarchivos " +
-                                                    "WHERE SUBSTR(nombrearchivocarga, 1, INSTR(nombrearchivocarga, '.', 1, 1) - 1) IS NOT NULL " +
-                                                    "AND UPPER('" + filename + "') " +
-                                                    "LIKE '%'||SUBSTR(nombrearchivocarga, 1, INSTR(nombrearchivocarga, '.', 1, 1) - 1)||'%' " +
-                                                    "GROUP BY nombrearchivocarga " +
-                                                    "ORDER BY nombrearchivocarga", true);
-            if (!(String.IsNullOrEmpty(varchivovalido)))
+            try
             {
-                logWriter.addLog("Procesando " + filename, false);
-                Read_file(Path.Combine(rutasubwork, filename), varchivovalido, conexion, logWriter);
-                Readed_file(Path.Combine(rutasubwork, filename), rutaoutput, conexion, logWriter);
+                OracleFunctions oracleFunctions = new OracleFunctions(conexion, logWriter);
+                string varchivovalido = oracleFunctions.SelectFromWhere("SELECT SUBSTR(nombrearchivocarga, 1, INSTR(nombrearchivocarga, '.', 1, 1) - 1) " +
+                                                        "FROM concargarchivos " +
+                                                        "WHERE SUBSTR(nombrearchivocarga, 1, INSTR(nombrearchivocarga, '.', 1, 1) - 1) IS NOT NULL " +
+                                                        "AND UPPER('" + filename + "') " +
+                                                        "LIKE '%'||SUBSTR(nombrearchivocarga, 1, INSTR(nombrearchivocarga, '.', 1, 1) - 1)||'%' " +
+                                                        "GROUP BY nombrearchivocarga " +
+                                                        "ORDER BY nombrearchivocarga", true);
+                if (!(String.IsNullOrEmpty(varchivovalido)))
+                {
+                    logWriter.addLog("Procesando " + filename, false);
+                    Read_file(Path.Combine(rutasubwork, filename), varchivovalido, conexion, logWriter);
+                    Readed_file(Path.Combine(rutasubwork, filename), rutaoutput, conexion, logWriter);
+                }
+                else
+                {
+                    Console.WriteLine(" >>> Rechazado: Nombre Archivo no se encuentra parametrizado en la tabla CONCARGARCHIVOS");
+                    logWriter.addLog("Nombre Archivo no se encuentra parametrizado en la tabla CONCARGARCHIVOS", true);
+                }
             }
-            else
+            catch (Exception ex)
             {
-                Console.WriteLine(" >>> Rechazado: Nombre Archivo no se encuentra parametrizado en la tabla CONCARGARCHIVOS");
-                logWriter.addLog("Nombre Archivo no se encuentra parametrizado en la tabla CONCARGARCHIVOS", true);
+                Console.WriteLine(ex.Message);
+                logWriter.addLog(ex.Message, true);
+                logWriter.LogWrite();
             }
         }
         public static void Read_file(string xlsFilePath, string ArchivoValido, string conexion, LogWriter logWriter)
         {
-            if (!File.Exists(xlsFilePath))
-                return;
-
-            Console.WriteLine("                  >>> " + DateTime.Now.ToString("HH:mm:ss") + ": Lectura y Escritura del excel... ");
-            logWriter.addLog("Lectura y Escritura del excel", false);
-            FileInfo fi = new FileInfo(xlsFilePath);
-            long filesize = fi.Length;
-
-            Application xlApp;
-            Workbook xlWorkBook;
-            Worksheet xlWorkSheet;
-            Range range;
-            var misValue = Type.Missing;
-
-            // abrir el documento 
-            xlApp = new Application();
-            xlWorkBook = xlApp.Workbooks.Open(xlsFilePath, misValue, misValue,
-                misValue, misValue, misValue, misValue, misValue, misValue,
-                misValue, misValue, misValue, misValue, misValue, misValue);
-
-            // seleccion de la hoja de calculo
-            // get_item() devuelve object y numera las hojas a partir de 1
-            xlWorkSheet = (Worksheet)xlWorkBook.Worksheets.get_Item(1);
-
-            // seleccion rango activo
-            range = xlWorkSheet.UsedRange;
-            range.Columns.AutoFit();
-
-            // Variables de Campos
-            string vCampo_A, vCampo_B, vCampo_C, vCampo_D, vCampo_E, vCampo_F, vCampo_G, vCampo_H, vCampo_I, vCampo_J, vCampo_K, vCampo_L, vCampo_M, vCampo_N, vCampo_O, vCampo_P, vCampo_Q, vCampo_R, vCampo_S, vCampo_T;
-            string queryinsert, queryvalues;
-
-            // leer las celdas
-            int nFilaNada = 0, nFilaAlgo = 0;
-            int rows = range.Rows.Count;
-            int cols = range.Columns.Count;
-
-            if (cols > 20) cols = 20;
-
-            Process currentProcess = Process.GetCurrentProcess();
-            int vId_Archivo = Convert.ToInt32(currentProcess.Id);
-
-            DateTime hoy = DateTime.Now;
-
-            OracleFunctions oracleFunctions = new OracleFunctions(conexion, logWriter);
-            oracleFunctions.InsUpdDel_Oracle("DELETE FROM ARCHIVOSCONCIBANCATMP WHERE ID_ARCHIVO = " + vId_Archivo);
-
-            for (int row = 1; row <= rows; row++)
+            try
             {
-                vCampo_A = ""; vCampo_B = ""; vCampo_C = ""; vCampo_D = "";
-                vCampo_E = ""; vCampo_F = ""; vCampo_G = ""; vCampo_H = "";
-                vCampo_I = ""; vCampo_J = ""; vCampo_K = ""; vCampo_L = "";
-                vCampo_M = ""; vCampo_N = ""; vCampo_O = ""; vCampo_P = "";
-                vCampo_Q = ""; vCampo_R = ""; vCampo_S = ""; vCampo_T = "";
-
-                for (int col = 1; col <= cols; col++)
-                {
-                    // lectura como cadena
-                    var cellText = xlWorkSheet.Cells[row, col].Text;
-                    cellText = Convert.ToString(cellText);
-                    cellText = cellText.Replace("'", ""); // Comillas simples no pueden pasar en el Texto
-
-                    switch (col)
-                    {
-                        case 1: vCampo_A = cellText; break;
-                        case 2: vCampo_B = cellText; break;
-                        case 3: vCampo_C = cellText; break;
-                        case 4: vCampo_D = cellText; break;
-                        case 5: vCampo_E = cellText; break;
-                        case 6: vCampo_F = cellText; break;
-                        case 7: vCampo_G = cellText; break;
-                        case 8: vCampo_H = cellText; break;
-                        case 9: vCampo_I = cellText; break;
-                        case 10: vCampo_J = cellText; break;
-                        case 11: vCampo_K = cellText; break;
-                        case 12: vCampo_L = cellText; break;
-                        case 13: vCampo_M = cellText; break;
-                        case 14: vCampo_N = cellText; break;
-                        case 15: vCampo_O = cellText; break;
-                        case 16: vCampo_P = cellText; break;
-                        case 17: vCampo_Q = cellText; break;
-                        case 18: vCampo_R = cellText; break;
-                        case 19: vCampo_S = cellText; break;
-                        case 20: vCampo_T = cellText; break;
-                    }
-                }
-
-                if (String.IsNullOrEmpty(vCampo_A.Trim()) && String.IsNullOrEmpty(vCampo_B.Trim()) && String.IsNullOrEmpty(vCampo_C.Trim()) && String.IsNullOrEmpty(vCampo_D.Trim()) && String.IsNullOrEmpty(vCampo_E.Trim()) && String.IsNullOrEmpty(vCampo_F.Trim()) && String.IsNullOrEmpty(vCampo_G.Trim()) && String.IsNullOrEmpty(vCampo_H.Trim()) && String.IsNullOrEmpty(vCampo_I.Trim()) && String.IsNullOrEmpty(vCampo_J.Trim()) && String.IsNullOrEmpty(vCampo_K.Trim()) && String.IsNullOrEmpty(vCampo_L.Trim()) && String.IsNullOrEmpty(vCampo_M.Trim()) && String.IsNullOrEmpty(vCampo_N.Trim()) && String.IsNullOrEmpty(vCampo_O.Trim()) && String.IsNullOrEmpty(vCampo_P.Trim()) && String.IsNullOrEmpty(vCampo_Q.Trim()) && String.IsNullOrEmpty(vCampo_R.Trim()) && String.IsNullOrEmpty(vCampo_S.Trim()) && String.IsNullOrEmpty(vCampo_T.Trim()))
-                {
-                    nFilaNada++;
-                }
-                else
-                {
-                    nFilaAlgo = row;
-                    nFilaNada = 0;
-                }
-
-                if (nFilaNada > 10)
-                    rows = row++;
-
-                //Caracter  indica Ultima Fila Santander
-                if (vCampo_A != "")
-                {
-                    queryinsert = "INSERT INTO ARCHIVOSCONCIBANCATMP (CAMPO_A, CAMPO_B, CAMPO_C, CAMPO_D, CAMPO_E, CAMPO_F, CAMPO_G, CAMPO_H, CAMPO_I, CAMPO_J, CAMPO_K, CAMPO_L, CAMPO_M, CAMPO_N, CAMPO_O, CAMPO_P, CAMPO_Q, CAMPO_R, CAMPO_S, CAMPO_T, ID_ARCHIVO, NOMBREARCHIVO, TAMANOARCHIVO, ID_FILAS, ESTADO, ARCHIVOVALIDO) ";
-                    queryvalues = "VALUES ('" + vCampo_A + "', '" + vCampo_B + "', '" + vCampo_C + "', '" + vCampo_D + "', '" + vCampo_E + "', '" + vCampo_F + "', '" + vCampo_G + "', '" + vCampo_H + "', '" + vCampo_I + "', '" + vCampo_J + "', '" + vCampo_K + "', '" + vCampo_L + "', '" + vCampo_M + "', '" + vCampo_N + "', '" + vCampo_O + "', '" + vCampo_P + "', '" + vCampo_Q + "', '" + vCampo_R + "', '" + vCampo_S + "', '" + vCampo_T + "', " + vId_Archivo + ", '" + xlsFilePath + "', " + filesize + ", " + row + ", " + 0 /* 0 para Estado Carga Inicial */ + ", '" + ArchivoValido + "')";
-                    oracleFunctions.InsUpdDel_Oracle(queryinsert + queryvalues);
-                }
-
-            }
-            oracleFunctions.InsUpdDel_Oracle("DELETE FROM ARCHIVOSCONCIBANCATMP WHERE ID_ARCHIVO = " + vId_Archivo + " AND ID_FILAS > " + nFilaAlgo);
-
-            // cerrar
-            xlWorkBook.Close(false, misValue, misValue);
-            xlApp.Quit();
-
-            // liberar
-            ReleaseObject(xlWorkSheet);
-            ReleaseObject(xlWorkBook);
-            ReleaseObject(xlApp);
-
-            Console.WriteLine("                  >>> " + DateTime.Now.ToString("HH:mm:ss") + ": Validando Banco-Moneda-Cuenta... ");
-            logWriter.addLog("Validando Banco-Moneda-Cuenta", false);
-            oracleFunctions.Function_Procedure_Oracle(2, "PKG_CARGARARCHIVOSAUTO.P_UPD_BUSCA_BANCOMONEDACUENTA", "PIid_archivo", vId_Archivo, "", -1, "", -1);
-            string codigobanco = oracleFunctions.SelectFromWhere("SELECT DISTINCT CODIGOBANCO FROM ARCHIVOSCONCIBANCATMP WHERE ID_ARCHIVO = " + vId_Archivo + " AND ROWNUM = 1", false);
-
-            if (!(String.IsNullOrEmpty(codigobanco)))
-            {
-                int vCodigoBanco = Convert.ToInt32(codigobanco);
-                
-                //BBVA
-                //eliminar caracter "Espacio Duro" del numero de movimiento (HTML)
-                if (vCodigoBanco == 6)
-                {
-                    Console.WriteLine("                  >>> " + DateTime.Now.ToString("HH:mm:ss") + ": Removiendo Espacio Duro en el campo Num. Mvto (BBVA) ");
-                    logWriter.addLog("Removiendo Espacio Duro en el campo Num. Mvto (BBVA)", false);
-                    oracleFunctions.InsUpdDel_Oracle("UPDATE ARCHIVOSCONCIBANCATMP SET CAMPO_E = REPLACE(CAMPO_E, ' ', '') WHERE ID_ARCHIVO = " + vId_Archivo);
-                }
-
-
-                Console.WriteLine("                  >>> " + DateTime.Now.ToString("HH:mm:ss") + ": Buscando Tipo Carga... ");
-                logWriter.addLog("Buscando Tipo Carga", false);
-                int vTipoCarga = Convert.ToInt32(oracleFunctions.Function_Procedure_Oracle(1, "PKG_CARGARARCHIVOSAUTO.F_OBT_BUSCA_TIPOCARGABANCO", "PIid_archivo", vId_Archivo, "PIcodigobanco", vCodigoBanco, "", -1));
-                int vEstadoTipoCarga = 4;
-                if (vTipoCarga > 0)
-                    vEstadoTipoCarga = 3;
-                oracleFunctions.InsUpdDel_Oracle("UPDATE ARCHIVOSCONCIBANCATMP SET TIPOCARGA = " + vTipoCarga + ", ESTADO = " + vEstadoTipoCarga + " WHERE ID_ARCHIVO = " + vId_Archivo + " AND CODIGOBANCO = " + vCodigoBanco);
-
-
-                Console.WriteLine("                  >>> " + DateTime.Now.ToString("HH:mm:ss") + ": Buscando Parametros... ");
-                logWriter.addLog("Buscando Parametros", false);
-                int vParametros = Convert.ToInt32(oracleFunctions.Function_Procedure_Oracle(1, "PKG_CARGARARCHIVOSAUTO.F_UPD_BUSCA_EXISTEPARAMETRO", "PIid_archivo", vId_Archivo, "PIcodigobanco", vCodigoBanco, "PItipocarga", vTipoCarga));
-                int vEstadoParametros = 6;
-                if (vParametros > 0)
-                    vEstadoParametros = 5;
-                oracleFunctions.InsUpdDel_Oracle("UPDATE ARCHIVOSCONCIBANCATMP SET ESTADO = " + vEstadoParametros + " WHERE ID_ARCHIVO = " + vId_Archivo + " AND CODIGOBANCO = " + vCodigoBanco + " AND TIPOCARGA = " + vTipoCarga);
-
-                Console.Write("                  >>> " + DateTime.Now.ToString("HH:mm:ss") + ": Buscando Num. Cta... ");
-                logWriter.addLog("Buscando Num. Cta", false);
-                string vCodigoCuenta = oracleFunctions.SelectFromWhere("SELECT DISTINCT NUMEROCUENTA FROM ARCHIVOSCONCIBANCATMP WHERE ID_ARCHIVO = " + vId_Archivo + " AND ROWNUM = 1", false);
-                Console.WriteLine(vCodigoCuenta);
-
-                if (vEstadoParametros % 2 == 1)
-                {
-                    Console.WriteLine("                  >>> " + DateTime.Now.ToString("HH:mm:ss") + ": APROBADO");
-                    logWriter.addLog("APROBADO", false);
-                }
-                else
-                {
-                    Console.WriteLine("                  >>> " + DateTime.Now.ToString("HH:mm:ss") + ": RECHAZADO");
-                    logWriter.addLog("RECHAZADO", true);
+                if (!File.Exists(xlsFilePath))
                     return;
-                }
 
+                Console.WriteLine("                  >>> " + DateTime.Now.ToString("HH:mm:ss") + ": Lectura y Escritura del excel... ");
+                logWriter.addLog("Lectura y Escritura del excel", false);
+                FileInfo fi = new FileInfo(xlsFilePath);
+                long filesize = fi.Length;
 
-                if (!(String.IsNullOrEmpty(vCodigoCuenta)))
+                Application xlApp;
+                Workbook xlWorkBook;
+                Worksheet xlWorkSheet;
+                Range range;
+                var misValue = Type.Missing;
+
+                // abrir el documento 
+                xlApp = new Application();
+                xlWorkBook = xlApp.Workbooks.Open(xlsFilePath, misValue, misValue,
+                    misValue, misValue, misValue, misValue, misValue, misValue,
+                    misValue, misValue, misValue, misValue, misValue, misValue);
+
+                // seleccion de la hoja de calculo
+                // get_item() devuelve object y numera las hojas a partir de 1
+                xlWorkSheet = (Worksheet)xlWorkBook.Worksheets.get_Item(1);
+
+                // seleccion rango activo
+                range = xlWorkSheet.UsedRange;
+                range.Columns.AutoFit();
+
+                // Variables de Campos
+                string vCampo_A, vCampo_B, vCampo_C, vCampo_D, vCampo_E, vCampo_F, vCampo_G, vCampo_H, vCampo_I, vCampo_J, vCampo_K, vCampo_L, vCampo_M, vCampo_N, vCampo_O, vCampo_P, vCampo_Q, vCampo_R, vCampo_S, vCampo_T;
+                string queryinsert, queryvalues;
+
+                // leer las celdas
+                int nFilaNada = 0, nFilaAlgo = 0;
+                int rows = range.Rows.Count;
+                int cols = range.Columns.Count;
+
+                if (cols > 20) cols = 20;
+
+                Process currentProcess = Process.GetCurrentProcess();
+                int vId_Archivo = Convert.ToInt32(currentProcess.Id);
+
+                DateTime hoy = DateTime.Now;
+
+                OracleFunctions oracleFunctions = new OracleFunctions(conexion, logWriter);
+                oracleFunctions.InsUpdDel_Oracle("DELETE FROM ARCHIVOSCONCIBANCATMP WHERE ID_ARCHIVO = " + vId_Archivo);
+
+                for (int row = 1; row <= rows; row++)
                 {
-                    Console.WriteLine("                  >>> " + DateTime.Now.ToString("HH:mm:ss") + ": Insertando en CONCARGAPRIMERATMP... ");
-                    logWriter.addLog("Insertando en CONCARGAPRIMERATMP", false);
-                    oracleFunctions.Function_Procedure_Oracle(2, "PKG_CARGARARCHIVOSAUTO.P_GEN_CONCARGAPRIMERATMP", "PIid_archivo", vId_Archivo, "", -1, "", -1);
+                    vCampo_A = ""; vCampo_B = ""; vCampo_C = ""; vCampo_D = "";
+                    vCampo_E = ""; vCampo_F = ""; vCampo_G = ""; vCampo_H = "";
+                    vCampo_I = ""; vCampo_J = ""; vCampo_K = ""; vCampo_L = "";
+                    vCampo_M = ""; vCampo_N = ""; vCampo_O = ""; vCampo_P = "";
+                    vCampo_Q = ""; vCampo_R = ""; vCampo_S = ""; vCampo_T = "";
 
-                    //Sin parametros
-                    //Function_Procedure_Oracle(conexion, 2, "PKG_CARGARARCHIVOSAUTO.P_GEN_CARGABANCOS_CAJA", "", -1, "", -1, "", -1);
-
-                    using (OracleConnection connection =
-                           new OracleConnection(conexion))
+                    for (int col = 1; col <= cols; col++)
                     {
-                        try
+                        // lectura como cadena
+                        var cellText = xlWorkSheet.Cells[row, col].Text;
+                        cellText = Convert.ToString(cellText);
+                        cellText = cellText.Replace("'", ""); // Comillas simples no pueden pasar en el Texto
+
+                        switch (col)
+                        {
+                            case 1: vCampo_A = cellText; break;
+                            case 2: vCampo_B = cellText; break;
+                            case 3: vCampo_C = cellText; break;
+                            case 4: vCampo_D = cellText; break;
+                            case 5: vCampo_E = cellText; break;
+                            case 6: vCampo_F = cellText; break;
+                            case 7: vCampo_G = cellText; break;
+                            case 8: vCampo_H = cellText; break;
+                            case 9: vCampo_I = cellText; break;
+                            case 10: vCampo_J = cellText; break;
+                            case 11: vCampo_K = cellText; break;
+                            case 12: vCampo_L = cellText; break;
+                            case 13: vCampo_M = cellText; break;
+                            case 14: vCampo_N = cellText; break;
+                            case 15: vCampo_O = cellText; break;
+                            case 16: vCampo_P = cellText; break;
+                            case 17: vCampo_Q = cellText; break;
+                            case 18: vCampo_R = cellText; break;
+                            case 19: vCampo_S = cellText; break;
+                            case 20: vCampo_T = cellText; break;
+                        }
+                    }
+
+                    if (String.IsNullOrEmpty(vCampo_A.Trim()) && String.IsNullOrEmpty(vCampo_B.Trim()) && String.IsNullOrEmpty(vCampo_C.Trim()) && String.IsNullOrEmpty(vCampo_D.Trim()) && String.IsNullOrEmpty(vCampo_E.Trim()) && String.IsNullOrEmpty(vCampo_F.Trim()) && String.IsNullOrEmpty(vCampo_G.Trim()) && String.IsNullOrEmpty(vCampo_H.Trim()) && String.IsNullOrEmpty(vCampo_I.Trim()) && String.IsNullOrEmpty(vCampo_J.Trim()) && String.IsNullOrEmpty(vCampo_K.Trim()) && String.IsNullOrEmpty(vCampo_L.Trim()) && String.IsNullOrEmpty(vCampo_M.Trim()) && String.IsNullOrEmpty(vCampo_N.Trim()) && String.IsNullOrEmpty(vCampo_O.Trim()) && String.IsNullOrEmpty(vCampo_P.Trim()) && String.IsNullOrEmpty(vCampo_Q.Trim()) && String.IsNullOrEmpty(vCampo_R.Trim()) && String.IsNullOrEmpty(vCampo_S.Trim()) && String.IsNullOrEmpty(vCampo_T.Trim()))
+                    {
+                        nFilaNada++;
+                    }
+                    else
+                    {
+                        nFilaAlgo = row;
+                        nFilaNada = 0;
+                    }
+
+                    if (nFilaNada > 10)
+                        rows = row++;
+
+                    //Caracter  indica Ultima Fila Santander
+                    if (vCampo_A != "")
+                    {
+                        queryinsert = "INSERT INTO ARCHIVOSCONCIBANCATMP (CAMPO_A, CAMPO_B, CAMPO_C, CAMPO_D, CAMPO_E, CAMPO_F, CAMPO_G, CAMPO_H, CAMPO_I, CAMPO_J, CAMPO_K, CAMPO_L, CAMPO_M, CAMPO_N, CAMPO_O, CAMPO_P, CAMPO_Q, CAMPO_R, CAMPO_S, CAMPO_T, ID_ARCHIVO, NOMBREARCHIVO, TAMANOARCHIVO, ID_FILAS, ESTADO, ARCHIVOVALIDO) ";
+                        queryvalues = "VALUES ('" + vCampo_A + "', '" + vCampo_B + "', '" + vCampo_C + "', '" + vCampo_D + "', '" + vCampo_E + "', '" + vCampo_F + "', '" + vCampo_G + "', '" + vCampo_H + "', '" + vCampo_I + "', '" + vCampo_J + "', '" + vCampo_K + "', '" + vCampo_L + "', '" + vCampo_M + "', '" + vCampo_N + "', '" + vCampo_O + "', '" + vCampo_P + "', '" + vCampo_Q + "', '" + vCampo_R + "', '" + vCampo_S + "', '" + vCampo_T + "', " + vId_Archivo + ", '" + xlsFilePath + "', " + filesize + ", " + row + ", " + 0 /* 0 para Estado Carga Inicial */ + ", '" + ArchivoValido + "')";
+                        oracleFunctions.InsUpdDel_Oracle(queryinsert + queryvalues);
+                    }
+
+                }
+                oracleFunctions.InsUpdDel_Oracle("DELETE FROM ARCHIVOSCONCIBANCATMP WHERE ID_ARCHIVO = " + vId_Archivo + " AND ID_FILAS > " + nFilaAlgo);
+
+                // cerrar
+                xlWorkBook.Close(false, misValue, misValue);
+                xlApp.Quit();
+
+                // liberar
+                ReleaseObject(xlWorkSheet);
+                ReleaseObject(xlWorkBook);
+                ReleaseObject(xlApp);
+
+                Console.WriteLine("                  >>> " + DateTime.Now.ToString("HH:mm:ss") + ": Validando Banco-Moneda-Cuenta... ");
+                logWriter.addLog("Validando Banco-Moneda-Cuenta", false);
+                oracleFunctions.Function_Procedure_Oracle(2, "PKG_CARGARARCHIVOSAUTO.P_UPD_BUSCA_BANCOMONEDACUENTA", "PIid_archivo", vId_Archivo, "", -1, "", -1);
+                string codigobanco = oracleFunctions.SelectFromWhere("SELECT DISTINCT CODIGOBANCO FROM ARCHIVOSCONCIBANCATMP WHERE ID_ARCHIVO = " + vId_Archivo + " AND ROWNUM = 1", false);
+
+                if (!(String.IsNullOrEmpty(codigobanco)))
+                {
+                    int vCodigoBanco = Convert.ToInt32(codigobanco);
+
+                    //BBVA
+                    //eliminar caracter "Espacio Duro" del numero de movimiento (HTML)
+                    if (vCodigoBanco == 6)
+                    {
+                        Console.WriteLine("                  >>> " + DateTime.Now.ToString("HH:mm:ss") + ": Removiendo Espacio Duro en el campo Num. Mvto (BBVA) ");
+                        logWriter.addLog("Removiendo Espacio Duro en el campo Num. Mvto (BBVA)", false);
+                        oracleFunctions.InsUpdDel_Oracle("UPDATE ARCHIVOSCONCIBANCATMP SET CAMPO_E = REPLACE(CAMPO_E, ' ', '') WHERE ID_ARCHIVO = " + vId_Archivo);
+                    }
+
+
+                    Console.WriteLine("                  >>> " + DateTime.Now.ToString("HH:mm:ss") + ": Buscando Tipo Carga... ");
+                    logWriter.addLog("Buscando Tipo Carga", false);
+                    int vTipoCarga = Convert.ToInt32(oracleFunctions.Function_Procedure_Oracle(1, "PKG_CARGARARCHIVOSAUTO.F_OBT_BUSCA_TIPOCARGABANCO", "PIid_archivo", vId_Archivo, "PIcodigobanco", vCodigoBanco, "", -1));
+                    int vEstadoTipoCarga = 4;
+                    if (vTipoCarga > 0)
+                        vEstadoTipoCarga = 3;
+                    oracleFunctions.InsUpdDel_Oracle("UPDATE ARCHIVOSCONCIBANCATMP SET TIPOCARGA = " + vTipoCarga + ", ESTADO = " + vEstadoTipoCarga + " WHERE ID_ARCHIVO = " + vId_Archivo + " AND CODIGOBANCO = " + vCodigoBanco);
+
+
+                    Console.WriteLine("                  >>> " + DateTime.Now.ToString("HH:mm:ss") + ": Buscando Parametros... ");
+                    logWriter.addLog("Buscando Parametros", false);
+                    int vParametros = Convert.ToInt32(oracleFunctions.Function_Procedure_Oracle(1, "PKG_CARGARARCHIVOSAUTO.F_UPD_BUSCA_EXISTEPARAMETRO", "PIid_archivo", vId_Archivo, "PIcodigobanco", vCodigoBanco, "PItipocarga", vTipoCarga));
+                    int vEstadoParametros = 6;
+                    if (vParametros > 0)
+                        vEstadoParametros = 5;
+                    oracleFunctions.InsUpdDel_Oracle("UPDATE ARCHIVOSCONCIBANCATMP SET ESTADO = " + vEstadoParametros + " WHERE ID_ARCHIVO = " + vId_Archivo + " AND CODIGOBANCO = " + vCodigoBanco + " AND TIPOCARGA = " + vTipoCarga);
+
+                    Console.Write("                  >>> " + DateTime.Now.ToString("HH:mm:ss") + ": Buscando Num. Cta... ");
+                    logWriter.addLog("Buscando Num. Cta", false);
+                    string vCodigoCuenta = oracleFunctions.SelectFromWhere("SELECT DISTINCT NUMEROCUENTA FROM ARCHIVOSCONCIBANCATMP WHERE ID_ARCHIVO = " + vId_Archivo + " AND ROWNUM = 1", false);
+                    Console.WriteLine(vCodigoCuenta);
+
+                    if (vEstadoParametros % 2 == 1)
+                    {
+                        Console.WriteLine("                  >>> " + DateTime.Now.ToString("HH:mm:ss") + ": APROBADO");
+                        logWriter.addLog("APROBADO", false);
+                    }
+                    else
+                    {
+                        Console.WriteLine("                  >>> " + DateTime.Now.ToString("HH:mm:ss") + ": RECHAZADO");
+                        logWriter.addLog("RECHAZADO", true);
+                        return;
+                    }
+
+
+                    if (!(String.IsNullOrEmpty(vCodigoCuenta)))
+                    {
+                        Console.WriteLine("                  >>> " + DateTime.Now.ToString("HH:mm:ss") + ": Insertando en CONCARGAPRIMERATMP... ");
+                        logWriter.addLog("Insertando en CONCARGAPRIMERATMP", false);
+                        oracleFunctions.Function_Procedure_Oracle(2, "PKG_CARGARARCHIVOSAUTO.P_GEN_CONCARGAPRIMERATMP", "PIid_archivo", vId_Archivo, "", -1, "", -1);
+
+                        //Sin parametros
+                        //Function_Procedure_Oracle(conexion, 2, "PKG_CARGARARCHIVOSAUTO.P_GEN_CARGABANCOS_CAJA", "", -1, "", -1, "", -1);
+
+                        using (OracleConnection connection =
+                               new OracleConnection(conexion))
                         {
                             Console.WriteLine("                  >>> " + DateTime.Now.ToString("HH:mm:ss") + ": Generando Caja y Conciliando... ");
                             logWriter.addLog("Generando Caja y Conciliando", false);
@@ -477,26 +479,27 @@ namespace LectorExcelConciliacion
                             Console.WriteLine("                  >>> " + DateTime.Now.ToString("HH:mm:ss") + ": Fin.");
                             logWriter.addLog("Archivo Procesado", false);
                         }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine(ex.Message);
-                            logWriter.addLog(ex.Message, true);
-                        }
+                        //
                     }
-
-                    //
+                    else
+                    {
+                        Console.WriteLine("                  >>> Error: Codigo Cuenta Errada");
+                        Console.WriteLine("Codigo Cuenta Errada");
+                    }
                 }
                 else
                 {
-                    Console.WriteLine("                  >>> Error: Codigo Cuenta Errada");
-                    Console.WriteLine("Codigo Cuenta Errada");
+                    Console.WriteLine("                  >>> RECHAZADO. Banco no encontrado, revisar extracto descargado y parametros en SISGO");
+                    logWriter.addLog("Banco no encontrado, revisar extracto descargado y parametros en SISGO", true);
                 }
             }
-            else
+            catch (Exception ex)
             {
-                Console.WriteLine("                  >>> RECHAZADO. Banco no encontrado, revisar extracto descargado y parametros en SISGO");
-                logWriter.addLog("Banco no encontrado, revisar extracto descargado y parametros en SISGO", true);
+                Console.WriteLine(ex.Message);
+                logWriter.addLog(ex.Message, true);
+                logWriter.LogWrite();
             }
+            
         }
         public static void Readed_file(string xlsFilePath, string rutaoutput, string conexion, LogWriter logWriter)
         {
@@ -516,13 +519,13 @@ namespace LectorExcelConciliacion
             "WHERE ID_ARCHIVO = " + vId_Archivo;
             string vfileoutput;
 
-            using (OracleConnection connection =
-                   new OracleConnection(conexion))
+            try
             {
-                OracleCommand command = connection.CreateCommand();
-                command.CommandText = queryString;
-                try
+                using (OracleConnection connection =
+                       new OracleConnection(conexion))
                 {
+                    OracleCommand command = connection.CreateCommand();
+                    command.CommandText = queryString;
                     string subPath = DateTime.Now.ToString("dd-MM-yyyy");
 
                     if (!Directory.Exists(rutaoutput + subPath))
@@ -550,11 +553,22 @@ namespace LectorExcelConciliacion
                     }
                     reader.Close();
                 }
-                catch (Exception ex)
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                logWriter.addLog(ex.Message, true);
+                try
                 {
-                    Console.WriteLine(ex.Message);
-                    logWriter.addLog("Banco no encontrado, revisar extracto descargado y parametros en SISGO", true);
+                    OracleFunctions oracleFunctions = new OracleFunctions(conexion, logWriter);
+                    oracleFunctions.InsUpdDel_Oracle("DELETE FROM ARCHIVOSCONCIBANCATMP WHERE ID_ARCHIVO = " + vId_Archivo);
                 }
+                catch (Exception ex2)
+                {
+                    Console.WriteLine(ex2.Message);
+                    logWriter.addLog(ex2.Message, true);
+                }
+                logWriter.LogWrite();
             }
         }
         public static void ReleaseObject(object obj)
