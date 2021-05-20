@@ -469,9 +469,24 @@ namespace LectorExcelConciliacion
                             var prm1 = new OracleParameter("PIvalarchivocarga", OracleDbType.Varchar2) { Direction = ParameterDirection.Input, Value = Path.GetFileName(xlsFilePath) };
                             command.Parameters.Add(prm1);
 
+                            bool reintentar = true;
+                            int cantidadintentos = 0;
                             connection.Open();
-
-                            command.ExecuteNonQuery();
+                            while (reintentar && cantidadintentos <= 5)
+                            {
+                                cantidadintentos++;
+                                try
+                                {
+                                    command.ExecuteNonQuery();
+                                    reintentar = false;
+                                }
+                                catch (Exception ex)
+                                {
+                                    Console.WriteLine("Intento "+ cantidadintentos + ": " + ex.Message);
+                                    logWriter.addLog(ex.Message, true);
+                                    logWriter.LogWrite();
+                                }
+                            }
 
                             connection.Close();
                             command.Dispose();
