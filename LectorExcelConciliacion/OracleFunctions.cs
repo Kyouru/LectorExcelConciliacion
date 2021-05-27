@@ -46,21 +46,8 @@ namespace LectorExcelConciliacion
             {
                 vDATO = null;
                 Console.WriteLine(ex.Message);
-                using (StreamWriter w = File.AppendText("\\\\wlspacifico\\e\\ConciliacionBancaria$\\WORK\\" + DateTime.Now.ToString("yyyy-MM-dd") + ".txt"))
-                {
-                    Process currentProcess = Process.GetCurrentProcess();
-                    string log = "";
-                    log += currentProcess.Id.ToString() + "|";
-                    log += DateTime.Now.ToString("HH:mm:ss") + "|";
-                    log += "SelectFromWhere|";
-                    log += "ERROR|";
-                    log += "\r\n";
-                    w.Write(log);
-                    log = "";
-                    w.Close();
-                }
-                if (LogWriter != null)
-                    LogWriter.addLog(ex.Message, true);
+                LogWriter.addLog(ex.Message, true);
+                LogWriter.LogWrite();
             }
             return vDATO;
         }
@@ -89,21 +76,8 @@ namespace LectorExcelConciliacion
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
-                using (StreamWriter w = File.AppendText("\\\\wlspacifico\\e\\ConciliacionBancaria$\\WORK\\" + DateTime.Now.ToString("yyyy-MM-dd") + ".txt"))
-                {
-                    Process currentProcess = Process.GetCurrentProcess();
-                    string log = "";
-                    log += currentProcess.Id.ToString() + "|";
-                    log += DateTime.Now.ToString("HH:mm:ss") + "|";
-                    log += "InsUpdDel_Oracle|" + executequery + "";
-                    log += "ERROR|";
-                    log += "\r\n";
-                    w.Write(log);
-                    log = "";
-                    w.Close();
-                }
-                if (LogWriter != null)
-                    LogWriter.addLog(ex.Message, true);
+                LogWriter.addLog(ex.Message, true);
+                LogWriter.LogWrite();
             }
         }
         public string Function_Procedure_Oracle(int tipofunpro /* tipofunpro: 1 para function, 2 para procedure  */, string executequery, string nomprmt1, int prmt1, string nomprmt2, int prmt2, string nomprmt3, int prmt3)
@@ -153,26 +127,14 @@ namespace LectorExcelConciliacion
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
-                using (StreamWriter w = File.AppendText("\\\\wlspacifico\\e\\ConciliacionBancaria$\\WORK\\" + DateTime.Now.ToString("yyyy-MM-dd") + ".txt"))
-                {
-                    Process currentProcess = Process.GetCurrentProcess();
-                    string log = "";
-                    log += currentProcess.Id.ToString() + "|";
-                    log += DateTime.Now.ToString("HH:mm:ss") + "|";
-                    log += "Function_Procedure_Oracle:" + executequery + "|";
-                    log += "ERROR|";
-                    log += "\r\n";
-                    w.Write(log);
-                    log = "";
-                    w.Close();
-                }
-                if (LogWriter != null)
-                    LogWriter.addLog(ex.Message, true);
+                LogWriter.addLog(ex.Message, true);
+                LogWriter.LogWrite();
             }
             return vDATO;
         }
         public string ObtRuta(int tblcodarg, string name)
         {
+            string defaultWork = "\\\\wlspacifico\\e\\ConciliacionBancaria$\\WORK\\";
             string obtRuta = SelectFromWhere("SELECT TBLDETALLE FROM SYST900 WHERE TBLCODTAB = 50 AND TBLESTADO = 1 AND TBLCODARG IN (" + tblcodarg + ")", false);
             if (obtRuta == null)
             {
@@ -182,6 +144,21 @@ namespace LectorExcelConciliacion
                     LogWriter.addLog("Error obteniendo la ruta " + name, true);
                     LogWriter.addLog("Fin", false);
                     LogWriter.LogWrite();
+                }
+                else
+                {
+                    using (StreamWriter w = File.AppendText(defaultWork + DateTime.Now.ToString("yyyy-MM-dd") + ".txt"))
+                    {
+                        Process currentProcess = Process.GetCurrentProcess();
+                        string log = "";
+                        log += currentProcess.Id.ToString() + "|";
+                        log += DateTime.Now.ToString("HH:mm:ss") + "|";
+                        log += "Error obteniendo la ruta: " + name + "|";
+                        log += "ERROR|";
+                        log += "\r\n";
+                        w.Write(log);
+                        w.Close();
+                    }
                 }
                 Environment.Exit(0);
             }
@@ -193,6 +170,21 @@ namespace LectorExcelConciliacion
                     LogWriter.addLog("Ruta " + name + " no encontrada. " + obtRuta, true);
                     LogWriter.addLog("Fin", false);
                     LogWriter.LogWrite();
+                }
+                else
+                {
+                    using (StreamWriter w = File.AppendText(defaultWork + DateTime.Now.ToString("yyyy-MM-dd") + ".txt"))
+                    {
+                        Process currentProcess = Process.GetCurrentProcess();
+                        string log = "";
+                        log += currentProcess.Id.ToString() + "|";
+                        log += DateTime.Now.ToString("HH:mm:ss") + "|";
+                        log += "Ruta no encontrada:" + name + "|";
+                        log += "ERROR|";
+                        log += "\r\n";
+                        w.Write(log);
+                        w.Close();
+                    }
                 }
                 Environment.Exit(0);
             }
