@@ -21,18 +21,21 @@ namespace LectorExcelConciliacion
 
         public void LogWrite()
         {
-            try
+            if (log != "")
             {
-                using (StreamWriter w = File.AppendText(Rutawork + "\\" + DateTime.Now.ToString("yyyy-MM-dd") +".txt"))
+                try
                 {
-                    w.Write(log);
-                    log = "";
-                    w.Close();
+                    using (StreamWriter w = File.AppendText(Rutawork + "\\" + DateTime.Now.ToString("yyyy-MM-dd") + ".txt"))
+                    {
+                        w.Write(log);
+                        log = "";
+                        w.Close();
+                    }
                 }
-            }
-            catch (Exception ex)
-            {
-                //Console.WriteLine(ex.Message);
+                catch (Exception ex)
+                {
+                    //Console.WriteLine(ex.Message);
+                }
             }
         }
 

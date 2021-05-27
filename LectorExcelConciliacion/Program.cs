@@ -88,6 +88,7 @@ namespace LectorExcelConciliacion
                 int offset = 0;
                 bool pause = true;
                 bool fileindividual = false;
+                bool carpetaparametro = false;
                 while (args.Length - offset > 0)
                 {
                     if (args[0 + offset] == "-help" || args[0 + offset] == "--help" || args[0 + offset] == "-nopause" || args[0 + offset] == "-hide" || args[0 + offset] == "-killall" || args[0 + offset] == "-file" || args[0 + offset] == "-path")
@@ -116,7 +117,7 @@ namespace LectorExcelConciliacion
                                 {
                                     process.Kill();
                                     Console.WriteLine(" LectorExcelConciliacion con PID " + process.Id + " cerrado.");
-                                    logWriter.addLog(" LectorExcelConciliacion con PID " + process.Id + " cerrado.", false);
+                                    logWriter.addLog("LectorExcelConciliacion con PID " + process.Id + " cerrado.", false);
                                 }
                             }
                             BorrarSubWork(rutasubwork, currentProcess.Id, true, logWriter);
@@ -133,6 +134,7 @@ namespace LectorExcelConciliacion
                                 logWriter.LogWrite();
                                 ArgInvalid(false, true);
                             }
+                            logWriter.addLog("Se recibio parametro FILE: " + args[1 + offset], false);
                             if (File.Exists(args[1 + offset]))
                             {
                                 Console.Write(" Moviendo archivo a ruta Work... ");
@@ -147,13 +149,14 @@ namespace LectorExcelConciliacion
                             else
                             {
                                 Console.WriteLine(" Archivo no encontrado\n Ruta: " + args[1 + offset]);
-                                logWriter.addLog(" Archivo no encontrado. Ruta: " + args[1 + offset], true);
+                                logWriter.addLog("Archivo no encontrado. Ruta: " + args[1 + offset], true);
                                 logWriter.LogWrite();
                             }
                             offset += 2;
                         }
                         else if (args[0 + offset] == "-path")
                         {
+                            carpetaparametro = true;
                             rutainput = args[1 + offset];
                             offset += 2;
                         }
@@ -177,6 +180,10 @@ namespace LectorExcelConciliacion
                 //Caso no halla parametro -file, revisa carpeta
                 if (!fileindividual)
                 {
+                    if (carpetaparametro)
+                    {
+                        logWriter.addLog("Se recibio parametro FILE: " + rutainput, false);
+                    }
                     Console.Write(" Buscardo archivos en la carpeta...");
                     string[] dirs = Directory.GetFiles(rutainput);
 
@@ -594,6 +601,7 @@ namespace LectorExcelConciliacion
             {
                 Console.WriteLine(ex.Message);
                 logWriter.addLog(ex.Message, true);
+                logWriter.LogWrite();
                 try
                 {
                     OracleFunctions oracleFunctions = new OracleFunctions(conexion, logWriter);
@@ -603,8 +611,8 @@ namespace LectorExcelConciliacion
                 {
                     Console.WriteLine(ex2.Message);
                     logWriter.addLog(ex2.Message, true);
+                    logWriter.LogWrite();
                 }
-                logWriter.LogWrite();
             }
         }
         public static void ReleaseObject(object obj, LogWriter logWriter)
@@ -619,6 +627,7 @@ namespace LectorExcelConciliacion
                 Console.WriteLine("Unable to release the object(object:{0})\n" + ex.Message, obj.ToString());
                 Console.WriteLine(ex.Message);
                 logWriter.addLog(ex.Message, true);
+                logWriter.LogWrite();
             }
             finally
             {
@@ -658,6 +667,7 @@ namespace LectorExcelConciliacion
                     Console.WriteLine("Error eliminando carpeta WORK" + Path.DirectorySeparatorChar + id + Path.DirectorySeparatorChar);
                     Console.WriteLine(ex.Message);
                     logWriter.addLog("Error eliminando carpeta SubWork" + Path.DirectorySeparatorChar + id + Path.DirectorySeparatorChar, true);
+                    logWriter.LogWrite();
                 }
                 return false;
             }
