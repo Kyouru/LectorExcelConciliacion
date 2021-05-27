@@ -10,7 +10,9 @@ namespace LectorExcelConciliacion
         string Rutawork;
         string log;
         string id;
-
+        int linea = 0;
+        int cont = 0;
+        int limite = 30;
         public LogWriter(string rutawork)
         {
             Rutawork = rutawork;
@@ -21,8 +23,10 @@ namespace LectorExcelConciliacion
 
         public void LogWrite()
         {
-            if (log != "")
+            string exmsg = "";
+            while (log != "" && cont < limite)
             {
+                cont++;
                 try
                 {
                     using (StreamWriter w = File.AppendText(Rutawork + "\\" + DateTime.Now.ToString("yyyy-MM-dd") + ".txt"))
@@ -34,9 +38,16 @@ namespace LectorExcelConciliacion
                 }
                 catch (Exception ex)
                 {
+                    System.Threading.Thread.Sleep(254);
+                    exmsg = ex.Message;
                     //Console.WriteLine(ex.Message);
                 }
             }
+            if (log != "")
+            {
+                Console.WriteLine(exmsg);
+            }
+            cont = 0;
         }
 
         public void addLog(string logMessage, Boolean error)
@@ -44,6 +55,7 @@ namespace LectorExcelConciliacion
             try
             {
                 log += id + "|";
+                log += linea + "|";
                 log += DateTime.Now.ToString("HH:mm:ss") + "|";
                 log += Regex.Replace(logMessage, @"\r\n?|\n", " ") + "|";
                 if (error)
@@ -51,6 +63,7 @@ namespace LectorExcelConciliacion
                     log += "ERROR|";
                 }
                 log += "\r\n";
+                linea++;
             }
             catch (Exception ex)
             {

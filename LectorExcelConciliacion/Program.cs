@@ -429,7 +429,6 @@ namespace LectorExcelConciliacion
                         oracleFunctions.InsUpdDel_Oracle("UPDATE ARCHIVOSCONCIBANCATMP SET CAMPO_E = REPLACE(CAMPO_E, ' ', '') WHERE ID_ARCHIVO = " + vId_Archivo);
                     }
 
-
                     Console.WriteLine("                  >>> " + DateTime.Now.ToString("HH:mm:ss") + ": Buscando Tipo Carga... ");
                     logWriter.addLog("Buscando Tipo Carga", false);
                     logWriter.LogWrite();
@@ -439,7 +438,6 @@ namespace LectorExcelConciliacion
                         vEstadoTipoCarga = 3;
                     oracleFunctions.InsUpdDel_Oracle("UPDATE ARCHIVOSCONCIBANCATMP SET TIPOCARGA = " + vTipoCarga + ", ESTADO = " + vEstadoTipoCarga + " WHERE ID_ARCHIVO = " + vId_Archivo + " AND CODIGOBANCO = " + vCodigoBanco);
 
-
                     Console.WriteLine("                  >>> " + DateTime.Now.ToString("HH:mm:ss") + ": Buscando Parametros... ");
                     logWriter.addLog("Buscando Parametros", false);
                     logWriter.LogWrite();
@@ -447,6 +445,10 @@ namespace LectorExcelConciliacion
                     int vEstadoParametros = 6;
                     if (vParametros > 0)
                         vEstadoParametros = 5;
+
+                    Console.WriteLine("                  >>> " + DateTime.Now.ToString("HH:mm:ss") + ": Actualizando Temporal... ");
+                    logWriter.addLog("Actualizando Temporal", false);
+                    logWriter.LogWrite();
                     oracleFunctions.InsUpdDel_Oracle("UPDATE ARCHIVOSCONCIBANCATMP SET ESTADO = " + vEstadoParametros + " WHERE ID_ARCHIVO = " + vId_Archivo + " AND CODIGOBANCO = " + vCodigoBanco + " AND TIPOCARGA = " + vTipoCarga);
 
                     Console.Write("                  >>> " + DateTime.Now.ToString("HH:mm:ss") + ": Buscando Num. Cta... ");
@@ -455,22 +457,21 @@ namespace LectorExcelConciliacion
                     string vCodigoCuenta = oracleFunctions.SelectFromWhere("SELECT DISTINCT NUMEROCUENTA FROM ARCHIVOSCONCIBANCATMP WHERE ID_ARCHIVO = " + vId_Archivo + " AND ROWNUM = 1", false);
                     Console.WriteLine(vCodigoCuenta);
                     logWriter.addLog("Numero de Cuenta " + vCodigoCuenta, false);
-                    logWriter.LogWrite();
+                    //logWriter.LogWrite();
 
                     if (vEstadoParametros % 2 == 1)
                     {
                         Console.WriteLine("                  >>> " + DateTime.Now.ToString("HH:mm:ss") + ": APROBADO");
                         logWriter.addLog("APROBADO", false);
-                        logWriter.LogWrite();
+                        //logWriter.LogWrite();
                     }
                     else
                     {
                         Console.WriteLine("                  >>> " + DateTime.Now.ToString("HH:mm:ss") + ": RECHAZADO");
                         logWriter.addLog("RECHAZADO", true);
-                        logWriter.LogWrite();
+                        //logWriter.LogWrite();
                         return;
                     }
-
 
                     if (!(String.IsNullOrEmpty(vCodigoCuenta)))
                     {
