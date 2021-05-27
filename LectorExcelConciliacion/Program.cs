@@ -59,6 +59,7 @@ namespace LectorExcelConciliacion
             try
             {
                 logWriter.addLog("Inicio", false);
+                logWriter.LogWrite();
                 //Sub carpeta dentro de WORK
                 string rutasubwork = rutawork + currentProcess.Id + Path.DirectorySeparatorChar;
                 if (!Directory.Exists(rutasubwork))
@@ -139,13 +140,15 @@ namespace LectorExcelConciliacion
                                 File.Move(args[1 + offset], nombrearchivo);
                                 Console.WriteLine(" OK");
                                 logWriter.addLog("Se movió " + Path.GetFileName(nombrearchivo) + " a SubWork", false);
+                                logWriter.LogWrite();
                                 Console.WriteLine("    Procesando >> " + nombrearchivo);
                                 ExecuteExcel(Path.GetFileName(nombrearchivo), rutasubwork, rutaoutput, conexion, logWriter);
                             }
                             else
                             {
                                 Console.WriteLine(" Archivo no encontrado\n Ruta: " + args[1 + offset]);
-                                logWriter.addLog(" Archivo no encontrado\n Ruta: " + args[1 + offset], true);
+                                logWriter.addLog(" Archivo no encontrado. Ruta: " + args[1 + offset], true);
+                                logWriter.LogWrite();
                             }
                             offset += 2;
                         }
@@ -182,7 +185,8 @@ namespace LectorExcelConciliacion
                     {
                         Console.WriteLine(" OK");
                         Console.WriteLine("  Se encontró " + dirs.Length + " archivos:");
-                        logWriter.addLog("Se encontró " + dirs.Length + " archivos", false);
+                        logWriter.addLog("Se encontró " + dirs.Length + " archivos en la ruta: " + rutainput, false);
+                        logWriter.LogWrite();
 
                         foreach (string dir in dirs)
                         {
@@ -210,6 +214,7 @@ namespace LectorExcelConciliacion
                         string nombrearchivo = Path.Combine(rutasubwork, Path.GetFileNameWithoutExtension(dir) + "_" + currentProcess.Id + Path.GetExtension(dir));
                         File.Move(dir, nombrearchivo);
                         logWriter.addLog("Se movió " + Path.GetFileName(nombrearchivo) + " a SubWork", false);
+                        //logWriter.LogWrite();
                     }
 
                     string[] dirswork = Directory.GetFiles(rutasubwork);
@@ -255,6 +260,7 @@ namespace LectorExcelConciliacion
                 if (!(String.IsNullOrEmpty(varchivovalido)))
                 {
                     logWriter.addLog("Procesando " + filename, false);
+                    //logWriter.LogWrite();
                     Read_file(Path.Combine(rutasubwork, filename), varchivovalido, conexion, logWriter);
                     Readed_file(Path.Combine(rutasubwork, filename), rutaoutput, conexion, logWriter);
                 }
@@ -280,6 +286,7 @@ namespace LectorExcelConciliacion
 
                 Console.WriteLine("                  >>> " + DateTime.Now.ToString("HH:mm:ss") + ": Lectura y Escritura del excel... ");
                 logWriter.addLog("Lectura y Escritura del excel", false);
+                logWriter.LogWrite();
                 FileInfo fi = new FileInfo(xlsFilePath);
                 long filesize = fi.Length;
 
@@ -391,12 +398,13 @@ namespace LectorExcelConciliacion
                 xlApp.Quit();
 
                 // liberar
-                ReleaseObject(xlWorkSheet);
-                ReleaseObject(xlWorkBook);
-                ReleaseObject(xlApp);
+                ReleaseObject(xlWorkSheet, logWriter);
+                ReleaseObject(xlWorkBook, logWriter);
+                ReleaseObject(xlApp, logWriter);
 
                 Console.WriteLine("                  >>> " + DateTime.Now.ToString("HH:mm:ss") + ": Validando Banco-Moneda-Cuenta... ");
                 logWriter.addLog("Validando Banco-Moneda-Cuenta", false);
+                logWriter.LogWrite();
                 oracleFunctions.Function_Procedure_Oracle(2, "PKG_CARGARARCHIVOSAUTO.P_UPD_BUSCA_BANCOMONEDACUENTA", "PIid_archivo", vId_Archivo, "", -1, "", -1);
                 string codigobanco = oracleFunctions.SelectFromWhere("SELECT DISTINCT CODIGOBANCO FROM ARCHIVOSCONCIBANCATMP WHERE ID_ARCHIVO = " + vId_Archivo + " AND ROWNUM = 1", false);
 
@@ -410,12 +418,14 @@ namespace LectorExcelConciliacion
                     {
                         Console.WriteLine("                  >>> " + DateTime.Now.ToString("HH:mm:ss") + ": Removiendo Espacio Duro en el campo Num. Mvto (BBVA) ");
                         logWriter.addLog("Removiendo Espacio Duro en el campo Num. Mvto (BBVA)", false);
+                        //logWriter.LogWrite();
                         oracleFunctions.InsUpdDel_Oracle("UPDATE ARCHIVOSCONCIBANCATMP SET CAMPO_E = REPLACE(CAMPO_E, ' ', '') WHERE ID_ARCHIVO = " + vId_Archivo);
                     }
 
 
                     Console.WriteLine("                  >>> " + DateTime.Now.ToString("HH:mm:ss") + ": Buscando Tipo Carga... ");
                     logWriter.addLog("Buscando Tipo Carga", false);
+                    logWriter.LogWrite();
                     int vTipoCarga = Convert.ToInt32(oracleFunctions.Function_Procedure_Oracle(1, "PKG_CARGARARCHIVOSAUTO.F_OBT_BUSCA_TIPOCARGABANCO", "PIid_archivo", vId_Archivo, "PIcodigobanco", vCodigoBanco, "", -1));
                     int vEstadoTipoCarga = 4;
                     if (vTipoCarga > 0)
@@ -425,6 +435,7 @@ namespace LectorExcelConciliacion
 
                     Console.WriteLine("                  >>> " + DateTime.Now.ToString("HH:mm:ss") + ": Buscando Parametros... ");
                     logWriter.addLog("Buscando Parametros", false);
+                    logWriter.LogWrite();
                     int vParametros = Convert.ToInt32(oracleFunctions.Function_Procedure_Oracle(1, "PKG_CARGARARCHIVOSAUTO.F_UPD_BUSCA_EXISTEPARAMETRO", "PIid_archivo", vId_Archivo, "PIcodigobanco", vCodigoBanco, "PItipocarga", vTipoCarga));
                     int vEstadoParametros = 6;
                     if (vParametros > 0)
@@ -433,18 +444,23 @@ namespace LectorExcelConciliacion
 
                     Console.Write("                  >>> " + DateTime.Now.ToString("HH:mm:ss") + ": Buscando Num. Cta... ");
                     logWriter.addLog("Buscando Num. Cta", false);
+                    //logWriter.LogWrite();
                     string vCodigoCuenta = oracleFunctions.SelectFromWhere("SELECT DISTINCT NUMEROCUENTA FROM ARCHIVOSCONCIBANCATMP WHERE ID_ARCHIVO = " + vId_Archivo + " AND ROWNUM = 1", false);
                     Console.WriteLine(vCodigoCuenta);
+                    logWriter.addLog("Numero de Cuenta " + vCodigoCuenta, false);
+                    logWriter.LogWrite();
 
                     if (vEstadoParametros % 2 == 1)
                     {
                         Console.WriteLine("                  >>> " + DateTime.Now.ToString("HH:mm:ss") + ": APROBADO");
                         logWriter.addLog("APROBADO", false);
+                        logWriter.LogWrite();
                     }
                     else
                     {
                         Console.WriteLine("                  >>> " + DateTime.Now.ToString("HH:mm:ss") + ": RECHAZADO");
                         logWriter.addLog("RECHAZADO", true);
+                        logWriter.LogWrite();
                         return;
                     }
 
@@ -453,6 +469,7 @@ namespace LectorExcelConciliacion
                     {
                         Console.WriteLine("                  >>> " + DateTime.Now.ToString("HH:mm:ss") + ": Insertando en CONCARGAPRIMERATMP... ");
                         logWriter.addLog("Insertando en CONCARGAPRIMERATMP", false);
+                        logWriter.LogWrite();
                         oracleFunctions.Function_Procedure_Oracle(2, "PKG_CARGARARCHIVOSAUTO.P_GEN_CONCARGAPRIMERATMP", "PIid_archivo", vId_Archivo, "", -1, "", -1);
 
                         //Sin parametros
@@ -463,6 +480,7 @@ namespace LectorExcelConciliacion
                         {
                             Console.WriteLine("                  >>> " + DateTime.Now.ToString("HH:mm:ss") + ": Generando Caja y Conciliando... ");
                             logWriter.addLog("Generando Caja y Conciliando", false);
+                            logWriter.LogWrite();
 
                             OracleCommand command = new OracleCommand("PKG_CARGARARCHIVOSAUTO.P_GEN_CARGABANCOS_CAJA", connection) { CommandType = CommandType.StoredProcedure };
 
@@ -472,7 +490,7 @@ namespace LectorExcelConciliacion
                             bool reintentar = true;
                             int cantidadintentos = 0;
                             connection.Open();
-                            while (reintentar && cantidadintentos <= 5)
+                            while (reintentar && cantidadintentos < 5)
                             {
                                 cantidadintentos++;
                                 try
@@ -483,7 +501,7 @@ namespace LectorExcelConciliacion
                                 catch (Exception ex)
                                 {
                                     Console.WriteLine("Intento "+ cantidadintentos + ": " + ex.Message);
-                                    logWriter.addLog(ex.Message, true);
+                                    logWriter.addLog("Intento " + cantidadintentos + ": " + ex.Message, true);
                                     logWriter.LogWrite();
                                 }
                             }
@@ -493,6 +511,7 @@ namespace LectorExcelConciliacion
 
                             Console.WriteLine("                  >>> " + DateTime.Now.ToString("HH:mm:ss") + ": Fin.");
                             logWriter.addLog("Archivo Procesado", false);
+                            //logWriter.LogWrite();
                         }
                         //
                     }
@@ -506,6 +525,7 @@ namespace LectorExcelConciliacion
                 {
                     Console.WriteLine("                  >>> RECHAZADO. Banco no encontrado, revisar extracto descargado y parametros en SISGO");
                     logWriter.addLog("Banco no encontrado, revisar extracto descargado y parametros en SISGO", true);
+                    logWriter.LogWrite();
                 }
             }
             catch (Exception ex)
@@ -518,24 +538,25 @@ namespace LectorExcelConciliacion
         }
         public static void Readed_file(string xlsFilePath, string rutaoutput, string conexion, LogWriter logWriter)
         {
-            Process currentProcess = Process.GetCurrentProcess();
-            int vId_Archivo = currentProcess.Id;
-
-            string queryString = "SELECT DISTINCT acbtmp.ID_ARCHIVO, " +
-                    "(CASE MOD(acbtmp.ESTADO, 2) WHEN 1 THEN 'APROBADO' ELSE 'RECHAZADO' END) APROBADO, " +
-                    "(CASE WHEN LENGTH(pkg_syst900.F_OBT_TBLDESCRI(39, acbtmp.codigobanco)) > 0 THEN pkg_syst900.F_OBT_TBLDESCRI(39, acbtmp.codigobanco) WHEN LENGTH(pkg_syst900.F_OBT_TBLDESCRI(39, acbtmp.codigobanco)) = 0 THEN '' END) BANCO, " +
-                    "(CASE WHEN LENGTH(pkg_syst900.F_OBT_TBLDESCRI(22, acbtmp.moneda)) > 0 THEN pkg_syst900.F_OBT_TBLDESCRI(22, acbtmp.moneda) WHEN LENGTH(pkg_syst900.F_OBT_TBLDESCRI(22, acbtmp.moneda)) = 0 THEN '' END) MONEDA, " +
-                    "(CASE WHEN LENGTH(acbtmp.numerocuenta) > 0 THEN acbtmp.numerocuenta WHEN LENGTH(acbtmp.numerocuenta) = 0 THEN '' END) CUENTA, " +
-                    "(CASE WHEN acbtmp.ESTADO = 1 OR acbtmp.ESTADO = 2 THEN 'BANCO-MONEDA-CUENTA' WHEN acbtmp.ESTADO = 3 OR acbtmp.ESTADO = 4 THEN 'TIPO-CARGA' WHEN acbtmp.ESTADO = 5 OR acbtmp.ESTADO = 6 THEN 'PARAMETROS' WHEN acbtmp.ESTADO = 7 THEN 'PROCESADO' ELSE 'SIN_INFORMACION' END) ESTADO, " +
-                    "CASE WHEN LENGTH((Select Distinct Max(ct.secuencarga) From concargaprimeratmp ct Where ct.fechacarga = trunc(acbtmp.fechacarga) And ct.codigobanco = acbtmp.codigobanco)) > 0 THEN (Select Distinct Decode(Max(ct.secuencarga), Null, 0, Max(ct.secuencarga)) From concargaprimeratmp ct Where ct.fechacarga = trunc(acbtmp.fechacarga) And ct.codigobanco = acbtmp.codigobanco) ELSE (CASE MOD(acbtmp.ESTADO, 2) WHEN 1 THEN 0 ELSE NULL END) END MAXIDBANCO, " +
-                    "TO_CHAR(SYSDATE, 'dd-mm-YYYY_HH24MISS') FECHA, " +
-                    "SUBSTR(acbtmp.NOMBREARCHIVO, (INSTR(acbtmp.NOMBREARCHIVO, '.', -1, 1) + 1), length(acbtmp.NOMBREARCHIVO)) EXTENSION " +
-                    "FROM archivosconcibancatmp acbtmp " +
-            "WHERE ID_ARCHIVO = " + vId_Archivo;
-            string vfileoutput;
-
+            int vId_Archivo = 0;
             try
             {
+                Process currentProcess = Process.GetCurrentProcess();
+                vId_Archivo = currentProcess.Id;
+
+                string queryString = "SELECT DISTINCT acbtmp.ID_ARCHIVO, " +
+                        "(CASE MOD(acbtmp.ESTADO, 2) WHEN 1 THEN 'APROBADO' ELSE 'RECHAZADO' END) APROBADO, " +
+                        "(CASE WHEN LENGTH(pkg_syst900.F_OBT_TBLDESCRI(39, acbtmp.codigobanco)) > 0 THEN pkg_syst900.F_OBT_TBLDESCRI(39, acbtmp.codigobanco) WHEN LENGTH(pkg_syst900.F_OBT_TBLDESCRI(39, acbtmp.codigobanco)) = 0 THEN '' END) BANCO, " +
+                        "(CASE WHEN LENGTH(pkg_syst900.F_OBT_TBLDESCRI(22, acbtmp.moneda)) > 0 THEN pkg_syst900.F_OBT_TBLDESCRI(22, acbtmp.moneda) WHEN LENGTH(pkg_syst900.F_OBT_TBLDESCRI(22, acbtmp.moneda)) = 0 THEN '' END) MONEDA, " +
+                        "(CASE WHEN LENGTH(acbtmp.numerocuenta) > 0 THEN acbtmp.numerocuenta WHEN LENGTH(acbtmp.numerocuenta) = 0 THEN '' END) CUENTA, " +
+                        "(CASE WHEN acbtmp.ESTADO = 1 OR acbtmp.ESTADO = 2 THEN 'BANCO-MONEDA-CUENTA' WHEN acbtmp.ESTADO = 3 OR acbtmp.ESTADO = 4 THEN 'TIPO-CARGA' WHEN acbtmp.ESTADO = 5 OR acbtmp.ESTADO = 6 THEN 'PARAMETROS' WHEN acbtmp.ESTADO = 7 THEN 'PROCESADO' ELSE 'SIN_INFORMACION' END) ESTADO, " +
+                        "CASE WHEN LENGTH((Select Distinct Max(ct.secuencarga) From concargaprimeratmp ct Where ct.fechacarga = trunc(acbtmp.fechacarga) And ct.codigobanco = acbtmp.codigobanco)) > 0 THEN (Select Distinct Decode(Max(ct.secuencarga), Null, 0, Max(ct.secuencarga)) From concargaprimeratmp ct Where ct.fechacarga = trunc(acbtmp.fechacarga) And ct.codigobanco = acbtmp.codigobanco) ELSE (CASE MOD(acbtmp.ESTADO, 2) WHEN 1 THEN 0 ELSE NULL END) END MAXIDBANCO, " +
+                        "TO_CHAR(SYSDATE, 'dd-mm-YYYY_HH24MISS') FECHA, " +
+                        "SUBSTR(acbtmp.NOMBREARCHIVO, (INSTR(acbtmp.NOMBREARCHIVO, '.', -1, 1) + 1), length(acbtmp.NOMBREARCHIVO)) EXTENSION " +
+                        "FROM archivosconcibancatmp acbtmp " +
+                "WHERE ID_ARCHIVO = " + vId_Archivo;
+                string vfileoutput;
+
                 using (OracleConnection connection =
                        new OracleConnection(conexion))
                 {
@@ -586,7 +607,7 @@ namespace LectorExcelConciliacion
                 logWriter.LogWrite();
             }
         }
-        public static void ReleaseObject(object obj)
+        public static void ReleaseObject(object obj, LogWriter logWriter)
         {
             try
             {
@@ -596,6 +617,8 @@ namespace LectorExcelConciliacion
             catch (Exception ex)
             {
                 Console.WriteLine("Unable to release the object(object:{0})\n" + ex.Message, obj.ToString());
+                Console.WriteLine(ex.Message);
+                logWriter.addLog(ex.Message, true);
             }
             finally
             {
