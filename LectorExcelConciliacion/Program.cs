@@ -288,6 +288,8 @@ namespace LectorExcelConciliacion
         {
             try
             {
+                int limitereintento = 5;
+
                 if (!File.Exists(xlsFilePath))
                     return;
 
@@ -498,27 +500,36 @@ namespace LectorExcelConciliacion
                             bool reintentar = true;
                             int cantidadintentos = 0;
                             connection.Open();
-                            while (reintentar && cantidadintentos < 5)
+                            while (reintentar && cantidadintentos < limitereintento)
                             {
                                 cantidadintentos++;
                                 try
                                 {
                                     command.ExecuteNonQuery();
+                                    Console.WriteLine("                  >>> " + DateTime.Now.ToString("HH:mm:ss") + ": Fin.");
+                                    logWriter.addLog("Archivo Procesado", false);
                                     reintentar = false;
                                 }
                                 catch (Exception ex)
                                 {
-                                    Console.WriteLine("Intento "+ cantidadintentos + ": " + ex.Message);
-                                    logWriter.addLog("Intento " + cantidadintentos + ": " + ex.Message, true);
-                                    logWriter.LogWrite();
+                                    Console.WriteLine(ex.Message);
+                                    if (cantidadintentos < limitereintento)
+                                    {
+                                        Console.WriteLine("Reintento " + cantidadintentos + 1 + "/" + limitereintento + "...");
+                                        logWriter.addLog("Intento " + cantidadintentos + "/" + limitereintento + ": " + ex.Message, true);
+                                        logWriter.LogWrite();
+                                    }
+                                    else
+                                    {
+                                        Console.WriteLine("                  >>> " + DateTime.Now.ToString("HH:mm:ss") + ": Archivo NO PROCESADO.");
+                                        logWriter.addLog("Archivo NO PROCESADO", false);
+                                    }
                                 }
                             }
 
                             connection.Close();
                             command.Dispose();
 
-                            Console.WriteLine("                  >>> " + DateTime.Now.ToString("HH:mm:ss") + ": Fin.");
-                            logWriter.addLog("Archivo Procesado", false);
                             //logWriter.LogWrite();
                         }
                         //
