@@ -54,8 +54,9 @@ namespace LectorExcelConciliacion
         {
             try
             {
-                log += id + "|";
-                log += linea + "|";
+                log += id.ToString().PadLeft(5) + "|";
+                log += linea.ToString().PadLeft(5) + "|";
+                log += System.Environment.MachineName.PadLeft(15) + "|";
                 log += DateTime.Now.ToString("HH:mm:ss") + "|";
                 log += Regex.Replace(logMessage, @"\r\n?|\n", " ") + "|";
                 if (error)

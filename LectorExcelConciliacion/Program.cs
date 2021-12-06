@@ -30,31 +30,50 @@ namespace LectorExcelConciliacion
             //String de conexion
             ConnString connString = new ConnString();
             //customString
-            string conexion;
-            if (ConfigurationManager.AppSettings["customConnection"].ToString() != "")
-            {
-                conexion = ConfigurationManager.AppSettings["customConnection"].ToString();
-            }
-            else
-            {
-                conexion = connString.GetString(ConfigurationManager.AppSettings["ambiente"].ToString());
-            }
-            //
-
-            OracleFunctions oracleFunctions = new OracleFunctions(conexion, null);
-            //ruta INPUT
-            string rutainput = oracleFunctions.ObtRuta(14, "INPUT");
-            //
-
-            //ruta OUTPUT
-            string rutaoutput = oracleFunctions.ObtRuta(15, "OUTPUT");
-            //
-
-            //ruta WORK
-            string rutawork = oracleFunctions.ObtRuta(29, "WORK");
-
+            string conexion = "";
+            OracleFunctions oracleFunctions;
+            string rutainput = "", rutaoutput = "", rutawork = "\\\\wlspacifico\\E\\ConciliacionBancaria$\\WORK";
             //inicio log
-            LogWriter logWriter = new LogWriter(rutawork);
+            LogWriter logWriter;
+
+            try
+            {
+                if (ConfigurationManager.AppSettings["customConnection"].ToString() != "")
+                {
+                    conexion = ConfigurationManager.AppSettings["customConnection"].ToString();
+                }
+                else
+                {
+                    conexion = connString.GetString(ConfigurationManager.AppSettings["ambiente"].ToString());
+                }
+                //
+                oracleFunctions = new OracleFunctions(conexion, null);
+                //ruta INPUT
+                rutainput = oracleFunctions.ObtRuta(14, "INPUT");
+                //
+
+                //ruta OUTPUT
+                rutaoutput = oracleFunctions.ObtRuta(15, "OUTPUT");
+                //
+
+                //ruta WORK
+                rutawork = oracleFunctions.ObtRuta(29, "WORK");
+                logWriter = new LogWriter(rutawork);
+            }
+            catch (Exception ex)
+            {
+                logWriter = new LogWriter(rutawork);
+                logWriter.addLog("Inicio", false);
+                Console.WriteLine("Error Connexion " + currentProcess.Id);
+                Console.WriteLine(ex.Message);
+                logWriter.addLog("Error Connexion " + currentProcess.Id, false);
+                logWriter.addLog(ex.Message, false);
+                Console.WriteLine("Fin del proceso");
+                logWriter.addLog("Fin", false);
+                logWriter.LogWrite();
+                Environment.Exit(0);
+            }
+
 
             try
             {
@@ -74,6 +93,7 @@ namespace LectorExcelConciliacion
                         Console.WriteLine(ex2.Message);
                         logWriter.addLog(ex2.Message, true);
                         logWriter.addLog("Fin", false);
+                        Console.WriteLine("Fin del proceso");
                         logWriter.LogWrite();
                         Environment.Exit(0);
                     }
@@ -122,6 +142,7 @@ namespace LectorExcelConciliacion
                             }
                             BorrarSubWork(rutasubwork, currentProcess.Id, true, logWriter);
                             logWriter.addLog("Fin", false);
+                            Console.WriteLine("Fin del proceso");
                             logWriter.LogWrite();
                             Environment.Exit(0);
                         }
@@ -143,12 +164,13 @@ namespace LectorExcelConciliacion
                                 Console.WriteLine(" OK");
                                 logWriter.addLog("Se movió " + Path.GetFileName(nombrearchivo) + " a SubWork", false);
                                 logWriter.LogWrite();
-                                Console.WriteLine("    Procesando >> " + nombrearchivo);
+                                Console.WriteLine("\n    Procesando >> " + nombrearchivo);
                                 ExecuteExcel(Path.GetFileName(nombrearchivo), rutasubwork, rutaoutput, conexion, logWriter);
                             }
                             else
                             {
                                 Console.WriteLine(" Archivo no encontrado\n Ruta: " + args[1 + offset]);
+                                Console.WriteLine("Fin del proceso");
                                 logWriter.addLog("Archivo no encontrado. Ruta: " + args[1 + offset], true);
                                 logWriter.LogWrite();
                             }
@@ -182,9 +204,9 @@ namespace LectorExcelConciliacion
                 {
                     if (carpetaparametro)
                     {
-                        logWriter.addLog("Se recibio parametro FILE: " + rutainput, false);
+                        logWriter.addLog("Se recibio parametro PATH: " + rutainput, false);
                     }
-                    Console.Write(" Buscardo archivos en la carpeta...");
+                    Console.Write(" Buscando archivos en la carpeta...");
                     string[] dirs = Directory.GetFiles(rutainput);
 
 
@@ -212,6 +234,7 @@ namespace LectorExcelConciliacion
                         BorrarSubWork(rutasubwork, currentProcess.Id, true, logWriter);
                         logWriter.addLog("No se encontró archivos en la ruta: " + rutainput, true);
                         logWriter.addLog("Fin", false);
+                        Console.WriteLine("\nFin del proceso");
                         logWriter.LogWrite();
                         Environment.Exit(0);
                     }
@@ -228,14 +251,14 @@ namespace LectorExcelConciliacion
                     int count = 1;
                     foreach (string dir in dirswork)
                     {
-                        Console.WriteLine(" Procesando " + count + "/" + dirswork.Length + " >> " + Path.GetFileName(dir));
+                        Console.WriteLine("\n Procesando " + count + "/" + dirswork.Length + " >> " + Path.GetFileName(dir));
                         ExecuteExcel(Path.GetFileName(dir), rutasubwork, rutaoutput, conexion, logWriter);
                         count++;
                     }
                 }
 
                 BorrarSubWork(rutasubwork, currentProcess.Id, true, logWriter);
-                Console.WriteLine("Fin");
+                Console.WriteLine("\nFin del proceso");
                 logWriter.addLog("Fin", false);
                 logWriter.LogWrite();
                 if (pause)
@@ -506,7 +529,8 @@ namespace LectorExcelConciliacion
                                 try
                                 {
                                     command.ExecuteNonQuery();
-                                    Console.WriteLine("                  >>> " + DateTime.Now.ToString("HH:mm:ss") + ": Fin.");
+                                    //Console.WriteLine("                  >>> " + DateTime.Now.ToString("HH:mm:ss") + ": Fin.");
+                                    Console.WriteLine("                  >>> " + DateTime.Now.ToString("HH:mm:ss") + ": Archivo Procesado");
                                     logWriter.addLog("Archivo Procesado", false);
                                     reintentar = false;
                                 }
@@ -602,6 +626,7 @@ namespace LectorExcelConciliacion
                         if (File.Exists(xlsFilePath))
                         {
                             File.Move(xlsFilePath, vfileoutput);
+                            Console.WriteLine("   > " + vfileoutput);
                         }
                         OracleFunctions oracleFunctions = new OracleFunctions(conexion, logWriter);
                         oracleFunctions.InsUpdDel_Oracle("DELETE FROM ARCHIVOSCONCIBANCATMP WHERE ID_ARCHIVO = " + vId_Archivo);
@@ -658,6 +683,7 @@ namespace LectorExcelConciliacion
             Console.WriteLine("  -killall: Termina todos los procesos en ejecucion de nombre LectorExcelConciliacion.exe");
             Console.WriteLine("  -file <ruta>: Procesa el archivo <ruta>");
             Console.WriteLine("  Sin parametro -file: Procesa todos los archivos en la carpeta INPUT");
+            Console.WriteLine("Fin del proceso");
             if (pause)
             {
                 Console.WriteLine("Presione cualquier tecla para salir...");
@@ -665,11 +691,26 @@ namespace LectorExcelConciliacion
             }
             Environment.Exit(0);
         }
-        public static bool BorrarSubWork(string rutasubwork, int id, bool msg, LogWriter logWriter)
+
+        public static bool BorrarSubWork(string target_dir, int id, bool msg, LogWriter logWriter)
         {
+            string[] files = Directory.GetFiles(target_dir);
+            string[] dirs = Directory.GetDirectories(target_dir);
+
             try
             {
-                Directory.Delete(rutasubwork, true);
+                foreach (string file in files)
+                {
+                    File.SetAttributes(file, FileAttributes.Normal);
+                    File.Delete(file);
+                }
+
+                foreach (string dir in dirs)
+                {
+                    BorrarSubWork(dir, id, msg, logWriter);
+                }
+
+                Directory.Delete(target_dir, false);
                 return true;
             }
             catch (Exception ex)
