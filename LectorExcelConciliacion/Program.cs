@@ -284,7 +284,7 @@ namespace LectorExcelConciliacion
                                                         "FROM concargarchivos " +
                                                         "WHERE SUBSTR(nombrearchivocarga, 1, INSTR(nombrearchivocarga, '.', 1, 1) - 1) IS NOT NULL " +
                                                         "AND UPPER('" + filename + "') " +
-                                                        "LIKE '%'||SUBSTR(nombrearchivocarga, 1, INSTR(nombrearchivocarga, '.', 1, 1) - 1)||'%' " +
+                                                        "LIKE '%'||SUBSTR(nombrearchivocarga, 1, INSTR(nombrearchivocarga, '.', 1, 1) - 1)||'%' ESCAPE '\\'" +
                                                         "GROUP BY nombrearchivocarga " +
                                                         "ORDER BY nombrearchivocarga", true);
                 if (!(String.IsNullOrEmpty(varchivovalido)))
@@ -423,7 +423,9 @@ namespace LectorExcelConciliacion
                     }
 
                 }
+
                 oracleFunctions.InsUpdDel_Oracle("DELETE FROM ARCHIVOSCONCIBANCATMP WHERE ID_ARCHIVO = " + vId_Archivo + " AND ID_FILAS > " + nFilaAlgo);
+
 
                 // cerrar
                 xlWorkBook.Close(false, misValue, misValue);
